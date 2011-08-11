@@ -1,3 +1,8 @@
+/**
+ * Much of this CSS is just refactored from CSS done by
+ * Chris Kankiewicz (https://github.com/PHLAK) for our
+ * issue tracker project: https://github.com/mtd/issues 
+ */
 html {
     background-color: #F9F9F9;
     font-size: 100%;
@@ -201,4 +206,16 @@ li.nostyle {
 
 .contrib-branches {
     border-bottom: 1px solid #C0C0C0;
+}
+
+#forkMeBanner {
+    display: inline-block;
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+#forkMeBanner img {
+    border: 0;
+    display: inline-block;
 }
