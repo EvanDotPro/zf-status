@@ -11,9 +11,10 @@ of the various contributor forks and branches. The goal of this project is to
 make the task of following the latest progress on Zend Framework which has not
 yet been merged into the main zendframework/zf2 repository. 
 
-Ironically, I built this on ZF1.
+Ironically, I built this on Zend Framework 1.11.10. I did this for the sake of
+stability so that this code can be used in production on the Zend Framework
+site. 
 
 License
 -------
 This projet is released under the terms of the [New BSD License](http://www.opensource.org/licenses/BSD-3-Clause). See **`LICENSE`** file for details.
-
