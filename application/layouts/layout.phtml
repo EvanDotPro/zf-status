@@ -1,0 +1,50 @@
+<?= $this->Doctype() ?>
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+    <head>
+        <?= $this->headMeta() ?>
+        <?= $this->headTitle('Zend Framework 2 Status') ?> 
+        <?= $this->jQuery() ?>
+        <?= $this->headLink()
+                 ->prependStylesheet('/css/style.css')
+                 ->prependStylesheet('/css/rebase-min.css') 
+                 ->appendStylesheet('/css/jquery.tooltip.css') ?>
+        <?= $this->headScript()
+                 ->appendFile('/js/zf2-status.js')
+                 ->appendFile('/js/jquery.tooltip.min.js')
+                 ->appendFile('/js/jquery.dimensions.js') ?>
+    </head>
+    <body>
+
+        <div id="pageWrap">
+            <div id="siteHeader" class="clearfix">
+                <div id="siteTitle" class="floatLeft">
+                    Zend Framework 2 Status
+                </div>
+            </div>
+            
+            <div class="clearfix">
+                <ul id="primaryNavigation" class="tabList floatLeft">
+                    <li class="active">
+                        <a href="#">All Components</a>
+                    </li>
+                </ul>
+            </div>
+            <div class="tabListBottom">
+                <ul class="tabListSubNav clearfix">
+                    <li class="active">
+                        <a href="#">Recently Updated (<?=count($this->zfComponents);?>)</a>
+                    </li>
+                </ul>
+            </div>
+            
+            <div id="pageContent" class="clearfix">
+                
+                <?= $this->layout()->content; ?>
+            
+            </div>
+            <p id="footer">ZF2 Status Tracker by <a href="http://blog.evan.pro/">Evan Coury</a></p>
+        </div>
+        
+    </body>
+</html>

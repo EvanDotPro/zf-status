@@ -1,0 +1,50 @@
+<script type="text/javascript">
+    $(document).ready(function(){
+        $('#accordion').accordion({
+            active: false,
+            collapsible: true,
+            autoHeight: false
+        });
+        $('.tabs').tabs();
+        $(".tooltip").tooltip({track: true});
+    });
+</script>
+<div id="accordion">
+    <? foreach ($this->zfComponents as $component => $details): ?>
+        <? $users = array_keys($details); ?>
+        <h3>
+            <a href="#"><?=$component;?>
+                <? if (count($details) > 0): ?>
+                    <span class="floatRight"><?=$details[reset($users)][0]['latest']->format(false ?: 'M d, Y H:i e');?></span>
+                <? endif; ?>
+            </a> 
+        </h3>
+        <div>
+            <? foreach (array_keys($details) as $user): ?>
+                <div class="contrib-branches">
+                <h3>&nbsp; <?= $details[$user][0]['user']->link; ?><br/>&nbsp;&nbsp;
+                    <? if($details[$user][0]['user']->name): ?>
+                        (<?=$details[$user][0]['user']->name;?>)
+                    <? endif; ?>
+                </h3>
+                <ul>
+                    <? foreach ($details[$user] as $j => $info): ?>
+                        <li class="nostyle ">
+                            <strong><?=$info['branch']; ?></strong><br/>
+                                <ul>
+                                    <? foreach($info['commits'] as $k => $commit): ?>
+                                        <? if ($k >= 3){ break; } ?>
+                                        <li title="<?=htmlentities(nl2br($commit->message));?>" class="commit tooltip nostyle <? if(($k+1)%2): ?>even<? else: ?>odd<? endif; ?>"><?=$commit->link;?> <span class="date floatRight"><?=$commit->committed_date->format(false ?: 'M d, Y H:i e');?></span>
+<br/><span style="padding: 5px 5px 0px 5px; display: block;"><?=htmlentities($commit->messageBrief);?></span></li>
+                                    <? endforeach; ?>                                 
+                                </ul>
+<? /*
+    <?=$info['commit']->link;?> <span class="floatRight"><?=$info['commit']->committed_date->format(false ?: 'M d, Y H:i e');?></span></li>
+ */?> 
+                    <? endforeach; ?>
+                </ul>
+                </div>
+            <? endforeach; ?>
+        </div>
+    <? endforeach; ?>
+</div>
