@@ -11,6 +11,11 @@ class Zfstatus_IndexController extends Zend_Controller_Action
         $repo = $this->_getParam('repo');
         $gitService = Zend_Registry::get('Zfstatus_DiContainer')->getGitService();
         $repos = $gitService->getRepositories();
-        var_dump($repos);die();
+        if (!$repo) {
+            echo "Try index/git/repo/reponame:\n";
+            var_dump(array_keys($repos));die();
+        } else {
+            var_dump($repos[$repo]->getRemoteBranches());die();
+        }
     }
 }

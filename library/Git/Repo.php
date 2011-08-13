@@ -34,6 +34,19 @@ class Repo
     }
 
     /**
+     * getRemoteBranches 
+     * 
+     * @return array
+     */
+    public function getRemoteBranches()
+    {
+        $branches = $this->getParser()->run('branch -rv --no-abbrev');
+        $pattern = '/\s*(?P<remote>[^\/\s]+)\/(?P<branch>[^\s]+)\s+(?P<sha1>[a-z0-9]{40})\s/';
+        preg_match_all($pattern, $branches, $matches, PREG_SET_ORDER);
+        return $matches;
+    }
+
+    /**
      * fetchAll 
      *
      * Updates all refs
