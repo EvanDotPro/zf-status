@@ -23,7 +23,8 @@ $config['resources']['cachemanager']['cache']['frontend']['name']               
 $config['resources']['cachemanager']['cache']['frontend']['options']['lifetime']                = 7200;
 $config['resources']['cachemanager']['cache']['frontend']['options']['automatic_serialization'] = true;
 $config['resources']['cachemanager']['cache']['backend']['name']                                = 'File';
-$config['resources']['cachemanager']['cache']['backend']['options']['cache_dir']                = APPLICATION_PATH . '/cache';
+$config['resources']['cachemanager']['cache']['backend']['options']['cache_dir']                = APPLICATION_PATH . '/data/cache';
+$config['git']['options']['cache_dir'] = APPLICATION_PATH . '/data/git';
 
 $file = dirname(__FILE__) . DIRECTORY_SEPARATOR . 'config.'.APPLICATION_ENV.'.php';
 if (file_exists($file)) {

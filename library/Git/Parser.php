@@ -3,9 +3,23 @@ namespace Git;
 use Exception;
 class Parser
 {
+    /**
+     * _gitPath 
+     *
+     * Path to git binary
+     * 
+     * @var string
+     */
     protected $_gitPath = '/usr/bin/git';
 
-    protected $_projectPath = false;
+    /**
+     * _projectPath 
+     *
+     * Path to git project
+     * 
+     * @var string
+     */
+    protected $_projectPath;
 
     /**
      * __construct 
@@ -75,15 +89,30 @@ class Parser
         if ($realProjectPath === false) {
             throw new Exception('Failed to resolve path: '.$projectPath);
         }
+        if (!$this->isGitRepo($realProjectPath)) {
+            throw new Exception('Given path not a valid git repository: '.$realProjectPath);
+        }
         $this->_projectPath = $realProjectPath;
         return $this;
     }
 
+    /**
+     * status 
+     * 
+     * @access public
+     * @return void
+     */
     public function status()
     {
         $status = $this->run('status --porcelain --short');
     }
 
+    /**
+     * isGitRepo 
+     * 
+     * @param string $path 
+     * @return bool
+     */
     public function isGitRepo($path)
     {
         $stderr = $this->run('status --porcelain --short 2>&1 1> /dev/null', $path);
