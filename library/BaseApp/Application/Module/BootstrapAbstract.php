@@ -17,8 +17,8 @@ abstract class BootstrapAbstract
             } else {
                 continue;
             }
-        }
-        \Zend_Registry::set($class, new $class());
+        }  
+        \Zend_Registry::set($class, new $class($this->getApplication()->getOptions()));
     }
 
     protected function _formatModuleName($name)

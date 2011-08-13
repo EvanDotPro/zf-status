@@ -1,5 +1,6 @@
 <?php
 $config['autoloadernamespaces'][]            = 'BaseApp';
+$config['autoloadernamespaces'][]            = 'Git';
 $config['resources']['layout']['layoutPath'] = APPLICATION_PATH . '/layouts';
 $config['resources']['layout']['layout']     = 'layout';
 $config['resources']['modules']              = array();

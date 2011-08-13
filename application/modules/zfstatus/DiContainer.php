@@ -18,6 +18,15 @@ class Zfstatus_DiContainer extends DiContainerAbstract
         return $this->_storage['zfService'];
     }
 
+    public function getGitService()
+    {
+        if (!isset($this->_storage['gitService'])) {
+            $options = $this->getOptions();
+            $this->_storage['gitService'] = new Zfstatus_Service_Git($options['git']['repo']);
+        }
+        return $this->_storage['gitService'];
+    }
+
     public function getCache()
     {
         return $this->_storage['cache'];
