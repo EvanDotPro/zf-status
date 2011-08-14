@@ -19,19 +19,20 @@
         <div>
             <? foreach ($details['remotes'] as $remote => $branches): ?>
                 <div class="contrib-branches">
-                <h3>&nbsp; <a href="https://github.com/<?= $remote; ?>" target="_blank"><img src="https://secure.gravatar.com/avatar/<?= md5(strtolower(trim(' '))); ?>?s=40&d=http://framework.zend.com/wiki/s/en/2148/48/_/images/icons/profilepics/anonymous.png" class="floatLeft" /><?= $remote; ?></a><br/>&nbsp;&nbsp;
-                    <? /* if($details[$user][0]['user']->name): ?>
-                        (<?=$details[$user][0]['user']->name;?>)
-                    <? endif; */ ?>
-                </h3>
                 <ul>
                     <? foreach ($branches as $branch => $commits): ?>
                         <li class="nostyle ">
-                            <strong><a href="https://github.com/<?= $remote; ?>/zf2/tree/<?= $branch; ?>" target="_blank"><?= $branch; ?></a></strong><br/>
+                            <strong><a href="https://github.com/<?= $remote; ?>/zf2/tree/<?= $branch; ?>" target="_blank"><?= $remote; ?>/<?= $branch; ?></a></strong><br/>
                                 <ul>
                                     <? foreach($commits as $i => $hash): ?>
-                                        <li title="<?=htmlentities(nl2br($details['commits'][$hash]->getMessage()));?>" class="commit tooltip nostyle <? if(($i+1)%2): ?>even<? else: ?>odd<? endif; ?>"><a href="https://github.com/<?= $remote; ?>/zf2/commit/<?= $hash; ?>" target="_blank"><?= substr($hash, 0, 7); ?></a> <span class="date floatRight"><?= $details['commits'][$hash]->getCommitterTime()->format(false ?: 'M d, Y H:i O');?></span>
-<br/><span style="padding: 5px 5px 0px 5px; display: block;"><?= htmlentities($details['commits'][$hash]->getSubject()); ?></span></li>
+                                        <li title="<?=htmlentities(nl2br($details['commits'][$hash]->getMessage()));?>" class="commit tooltip nostyle <? if(($i+1)%2): ?>even<? else: ?>odd<? endif; ?>">
+                                            <img src="https://secure.gravatar.com/avatar/<?= md5(strtolower(trim($details['commits'][$hash]->getAuthorEmail()))); ?>?s=40&d=http://framework.zend.com/wiki/s/en/2148/48/_/images/icons/profilepics/anonymous.png" class="floatLeft" />
+                                            &nbsp;<strong>Author:</strong> <?= $details['commits'][$hash]->getAuthorName(); ?><br/> 
+                                            &nbsp;<strong>Commit:</strong> <a href="https://github.com/<?= $remote; ?>/zf2/commit/<?= $hash; ?>" target="_blank">
+                                                <?= substr($hash, 0, 7); ?>
+                                            </a> 
+                                            <span class="date floatRight"><?= $details['commits'][$hash]->getAuthorTime()->format(false ?: 'M d, Y H:i O');?></span>
+<br/>&nbsp;<span style="padding: 5px 5px 0px 5px; display: block;"><?= htmlentities($details['commits'][$hash]->getSubject()); ?></span></li>
                                     <? endforeach; ?>                                 
                                 </ul>
 <? /*

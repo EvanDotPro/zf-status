@@ -101,13 +101,17 @@ class Zfstatus_Service_Zf
                     $components = $this->_commitToComponents($commit);
                     foreach ($components as $component) {
                         $componentIndex[$component]['commits'][$hash] = $commit;
+                        uasort($componentIndex[$component]['commits'], function($a, $b){
+                            if ($a->getAuthorTime() > $b->getAuthorTime()) return 1;
+                            return 0;
+                        });
                         $componentIndex[$component]['remotes'][$remote][$branch][] = $hash;
                         if (isset($componentIndex[$component]['latest'])) {
-                            if ($commit->getCommitterTime() > $componentIndex[$component]['latest']) {
-                                $componentIndex[$component]['latest'] = $commit->getCommitterTime();
+                            if ($commit->getAuthorTime() > $componentIndex[$component]['latest']) {
+                                $componentIndex[$component]['latest'] = $commit->getAuthorTime();
                             }
                         } else {
-                            $componentIndex[$component]['latest'] = $commit->getCommitterTime();
+                            $componentIndex[$component]['latest'] = $commit->getAuthorTime();
                         }
                     }
                 }
