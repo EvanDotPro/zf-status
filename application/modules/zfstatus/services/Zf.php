@@ -80,31 +80,41 @@ class Zfstatus_Service_Zf
         'Zend\XmlRpc'         => array(),
     );
 
-    /**
-     * GitHub -> Jira/Atlassian 
-     * 
-     * @var array
-     * @access protected
-     */
-    protected $_authors = array(
-        'weierophinney'  => 'matthew',
-        'ralphschindler' => 'ralph',
-        'marc-mabe'      => 'mabe',
-        'ezimuel'        => 'zimuel',
-        'robertbasic'    => 'robertbasic',
-        'adamlundrigan'  => 'adamlundrigan',
-        'DASPRiD'        => 'dasprid',
-        'thomasweidner'  => 'thomas',
-        'Freeaqingme'    => 'freak',
-        'farazdagi'      => 'torio',
-        'mikaelkael'     => 'mikaelkael',
-    );
-
     protected $_gh;
 
     public function __construct($gh)
     {
         $this->_gh = $gh;
+    }
+
+    public function getRecentActivity($repo)
+    {
+        $componentIndex = array();
+        foreach ($repo->getCommitsByBranch(3, '--no-merges') as $remote => $branches) {
+            // Skip origin, most work probably done in user forks
+            if ($remote == 'origin') continue;
+            foreach ($branches as $branch => $commits) {
+                // Skip master, work should be in topic branches
+                if ($branch == 'master') continue;
+                foreach ($commits as $hash) {
+                    $commit = $repo->getCommit($hash);
+                    $components = $this->_commitToComponents($commit);
+                    foreach ($components as $component) {
+                        $componentIndex[$component]['commits'][$hash] = $commit;
+                        $componentIndex[$component]['remotes'][$remote][$branch][] = $hash;
+                        if (isset($componentIndex[$component]['latest'])) {
+                            if ($commit->getCommitterTime() > $componentIndex[$component]['latest']) {
+                                $componentIndex[$component]['latest'] = $commit->getCommitterTime();
+                            }
+                        } else {
+                            $componentIndex[$component]['latest'] = $commit->getCommitterTime();
+                        }
+                    }
+                }
+            }
+        }
+        ksort($componentIndex);
+        return $componentIndex;
     }
 
     public function getComponents()
@@ -116,6 +126,7 @@ class Zfstatus_Service_Zf
     {
         return $this->_gh->getForks('zendframework','zf2');
     }
+
 
     /**
      * buildIndex 
@@ -142,7 +153,7 @@ class Zfstatus_Service_Zf
                     //    $lastCommit = $this->_gh->getCommit($fork->owner, $fork->name, $lastCommit->parents[0]->id);
                     //}
                     $component = false;
-                    if ($branchName != 'master') $component = $this->_commitToComponent($lastCommit); 
+                    if ($branchName != 'master') $component = $this->_gitHubCommitToComponent($lastCommit); 
                     if (isset($this->_components[$component])) $index[$component][$fork->owner][] = array(
                         'user' => $user, 
                         'branch' => $this->_gh->linkBranch($fork->owner, $fork->name, $branchName), 
@@ -176,7 +187,7 @@ class Zfstatus_Service_Zf
         return $components;
     }
 
-    protected function _commitToComponent($commit)
+    protected function _gitHubCommitToComponent($commit)
     {
         $components = array('failed' => array());
         if (isset($commit->modified) && is_array($commit->modified)) {
@@ -221,6 +232,27 @@ class Zfstatus_Service_Zf
         }
         $components = array_keys($components); 
         return array_shift($components);
+    }
+
+    protected function _commitToComponents($commit)
+    {
+        $components = array('nomatch' => array());
+        if (count($commit->getFiles()) > 0) {
+            foreach ($commit->getFiles() as $f) {
+                $f = $f['file'];
+                if ($c = $this->_filenameToComponentName($f)) {
+                    if (!isset($components[$c])) $components[$c] = 0;
+                    $components[$c]++;
+                } else {
+                    if (!isset($components['nomatch'][$f])) $components['nomatch'][$f] = 0;
+                    $components['nomatch'][$f]++;
+                }
+            }
+        }
+        unset($components['nomatch']); // comment out for debugging unmatched components
+        if (count(array_unique($components)) > 1) arsort($components);
+        $components = array_keys($components); 
+        return $components;
     }
 
     protected function _filenameToComponentName($filename)

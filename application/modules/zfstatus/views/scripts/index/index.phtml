@@ -11,31 +11,27 @@
 </script>
 <div id="accordion">
     <? foreach ($this->zfComponents as $component => $details): ?>
-        <? $users = array_keys($details); ?>
         <h3>
             <a href="#"><?=$component;?>
-                <? if (count($details) > 0): ?>
-                    <span class="floatRight"><?=$details[reset($users)][0]['latest']->format(false ?: 'M d, Y H:i e');?></span>
-                <? endif; ?>
+                <span class="floatRight"><?=$details['latest']->format(false ?: 'M d, Y H:i O');?></span>
             </a> 
         </h3>
         <div>
-            <? foreach (array_keys($details) as $user): ?>
+            <? foreach ($details['remotes'] as $remote => $branches): ?>
                 <div class="contrib-branches">
-                <h3>&nbsp; <?= $details[$user][0]['user']->link; ?><br/>&nbsp;&nbsp;
-                    <? if($details[$user][0]['user']->name): ?>
+                <h3>&nbsp; <a href="https://github.com/<?= $remote; ?>" target="_blank"><img src="https://secure.gravatar.com/avatar/<?= md5(strtolower(trim(' '))); ?>?s=40&d=http://framework.zend.com/wiki/s/en/2148/48/_/images/icons/profilepics/anonymous.png" class="floatLeft" /><?= $remote; ?></a><br/>&nbsp;&nbsp;
+                    <? /* if($details[$user][0]['user']->name): ?>
                         (<?=$details[$user][0]['user']->name;?>)
-                    <? endif; ?>
+                    <? endif; */ ?>
                 </h3>
                 <ul>
-                    <? foreach ($details[$user] as $j => $info): ?>
+                    <? foreach ($branches as $branch => $commits): ?>
                         <li class="nostyle ">
-                            <strong><?=$info['branch']; ?></strong><br/>
+                            <strong><a href="https://github.com/<?= $remote; ?>/zf2/tree/<?= $branch; ?>" target="_blank"><?= $branch; ?></a></strong><br/>
                                 <ul>
-                                    <? foreach($info['commits'] as $k => $commit): ?>
-                                        <? if ($k >= 3){ break; } ?>
-                                        <li title="<?=htmlentities(nl2br($commit->message));?>" class="commit tooltip nostyle <? if(($k+1)%2): ?>even<? else: ?>odd<? endif; ?>"><?=$commit->link;?> <span class="date floatRight"><?=$commit->committed_date->format(false ?: 'M d, Y H:i e');?></span>
-<br/><span style="padding: 5px 5px 0px 5px; display: block;"><?=htmlentities($commit->messageBrief);?></span></li>
+                                    <? foreach($commits as $i => $hash): ?>
+                                        <li title="<?=htmlentities(nl2br($details['commits'][$hash]->getMessage()));?>" class="commit tooltip nostyle <? if(($i+1)%2): ?>even<? else: ?>odd<? endif; ?>"><a href="https://github.com/<?= $remote; ?>/zf2/commit/<?= $hash; ?>" target="_blank"><?= substr($hash, 0, 7); ?></a> <span class="date floatRight"><?= $details['commits'][$hash]->getCommitterTime()->format(false ?: 'M d, Y H:i O');?></span>
+<br/><span style="padding: 5px 5px 0px 5px; display: block;"><?= htmlentities($details['commits'][$hash]->getSubject()); ?></span></li>
                                     <? endforeach; ?>                                 
                                 </ul>
 <? /*

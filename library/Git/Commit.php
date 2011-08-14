@@ -339,7 +339,7 @@ class Commit
     {
         $this->_files = array();
         foreach ($files as $file) {
-            if (count($file) == 6) {
+            if (count($file) == 7) {
                 unset($file[0], $file[1], $file[2], $file[3]);
                 // <OCD>
                 $file['insertions'] = (int) $file['insertions'];

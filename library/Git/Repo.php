@@ -61,12 +61,12 @@ class Repo
      * @param int $limit 
      * @return array
      */
-    public function getCommitsByBranch($limit = 5)
+    public function getCommitsByBranch($limit = 5, $extra = '')
     {
         $this->_commitsByBranch = array();
         $remoteBranches = $this->getRemoteBranches();
         foreach ($remoteBranches as $branch) {
-            $commits = $this->getParser()->run('log -n ' . $limit . ' --pretty=format:\'</files>%n</commit>%n<commit>%n<json>%n{%n  "commit": "%H",%n  "tree": "%T",%n  "parent": "%P",%n  "author": {%n    "name": "%aN",%n    "email": "%aE",%n    "date": "%ai"%n  },%n  "committer": {%n    "name": "%cN",%n    "email": "%cE",%n    "date": "%ci"%n  }%n}%n</json>%n<message><![CDATA[%B]]></message>%n<files>\' --numstat '."{$branch['remote']}/{$branch['branch']}");
+            $commits = $this->getParser()->run('log ' . $extra . ' -n ' . $limit . ' --pretty=format:\'</files>%n</commit>%n<commit>%n<json>%n{%n  "commit": "%H",%n  "tree": "%T",%n  "parent": "%P",%n  "author": {%n    "name": "%aN",%n    "email": "%aE",%n    "date": "%ai"%n  },%n  "committer": {%n    "name": "%cN",%n    "email": "%cE",%n    "date": "%ci"%n  }%n}%n</json>%n<message><![CDATA[%B]]></message>%n<files>\' --numstat '."{$branch['remote']}/{$branch['branch']}");
             $commits = simplexml_load_string('<commits>'.substr($commits,18).'</files></commit></commits>');
             foreach ($commits->commit as $log) {
                 $details = json_decode($log->json);
@@ -83,7 +83,7 @@ class Repo
                     $commit->setCommitterEmail((string)$details->committer->email);
                     $commit->setCommitterTime((string)$details->committer->date);
                     $commit->setMessage((string)$log->message);
-                    $commit->setFiles($this->_parseFiles($log->files));
+                    $commit->setFiles($this->_parseFiles((string)$log->files));
                     $this->setCommit($commit->getHash(), $commit);
                 }
                 $this->_commitsByBranch[$branch['remote']][$branch['branch']][] = $hash;
@@ -94,7 +94,7 @@ class Repo
 
     protected function _parseFiles($files)
     {
-        $pattern = '/\s*(?P<inserts>\d+)\s(?P<deletions>\d+)\s+(?P<file>[^\s]+)/';
+        $pattern = '/\s*(?P<insertions>\d+)\s(?P<deletions>\d+)\s+(?P<file>[^\s]+)/';
         preg_match_all($pattern, $files, $matches, PREG_SET_ORDER);
         return $matches;
     }
