@@ -97,17 +97,6 @@ class Parser
     }
 
     /**
-     * status 
-     * 
-     * @access public
-     * @return void
-     */
-    public function status()
-    {
-        $status = $this->run('status --porcelain --short');
-    }
-
-    /**
      * isGitRepo 
      * 
      * @param string $path 

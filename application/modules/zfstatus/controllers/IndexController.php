@@ -15,7 +15,7 @@ class Zfstatus_IndexController extends Zend_Controller_Action
             echo "Try index/git/repo/reponame:\n";
             var_dump(array_keys($repos));die();
         } else {
-            var_dump($repos[$repo]->getRemoteBranches());die();
+            var_dump($repos[$repo]->getCommitsByBranch());die();
         }
     }
 }
