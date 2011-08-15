@@ -95,7 +95,7 @@ class Zfstatus_Service_Zf
             if ($remote == 'origin') continue;
             foreach ($branches as $branch => $commits) {
                 // Skip master, work should be in topic branches
-                if ($branch == 'master') continue;
+                //if ($branch == 'master') continue;
                 foreach ($commits as $hash) {
                     $commit = $repo->getCommit($hash);
                     $components = $this->_commitToComponents($commit);

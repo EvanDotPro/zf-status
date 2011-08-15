@@ -180,6 +180,16 @@ class Commit
     {
         return $this->_authorEmail;
     }
+
+    /**
+     * getAuthorGravatar 
+     * 
+     * @return string
+     */
+    public function getAuthorGravatar()
+    {
+        return md5(strtolower(trim($this->getAuthorEmail())));
+    }
  
     /**
      * Set authorEmail.
@@ -242,6 +252,16 @@ class Commit
     public function getCommitterEmail()
     {
         return $this->_committerEmail;
+    }
+
+    /**
+     * getCommitterGravatar 
+     * 
+     * @return string
+     */
+    public function getCommitterGravatar()
+    {
+        return md5(strtolower(trim($this->getCommitterEmail())));
     }
  
     /**

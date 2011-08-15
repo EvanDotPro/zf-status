@@ -13,6 +13,7 @@ class Zfstatus_IndexController extends Zend_Controller_Action
             
         }
         $this->view->zfComponents = $zfService->getRecentActivity($repos[$repo]);
+        $this->view->repo = $repos[$repo];
         //var_dump($this->view->zfComponents);die();
     }
 }
