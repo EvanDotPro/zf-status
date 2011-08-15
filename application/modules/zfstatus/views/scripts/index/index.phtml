@@ -10,7 +10,9 @@
     });
 </script>
 <div id="accordion">
-    <? foreach ($this->zfComponents as $component => $details): ?>
+<? if (!$this->outputCache->start('accordion')): ?>
+
+    <? foreach ($this->zfService->getRecentActivity($this->repo) as $component => $details): ?>
         <h3>
             <a href="#"><?=$component;?>
                 <span class="floatRight"><?=$details['latest']->format(false ?: 'M d, Y H:i O');?></span>
@@ -28,11 +30,13 @@
                                 (Committed by <?= $commit->getCommitterName(); ?>)
                             <? endif; ?>
                             <br/> 
-                            &nbsp;<strong>Commit:</strong> <a href="https://github.com/<?= $this->repo->gravatarMap($commit->getAuthorGravatar()); ?>/zf2/commit/<?= $hash; ?>" target="_blank"><?= substr($hash, 0, 7); ?></a> 
+                            &nbsp;<strong>Commit:</strong> <a href="https://github.com/<?= $this->gh->emailToUsername($commit->getAuthorEmail(), $this->repo); ?>/zf2/commit/<?= $hash; ?>" target="_blank"><?= substr($hash, 0, 7); ?></a> 
                             <span style="padding: 5px 5px 0px 5px; display: block; clear: both;"><?= htmlentities($commit->getSubject()); ?></span></li>
                     <? endforeach; ?>                                 
                 </ul>
             </div>
         </div>
     <? endforeach; ?>
+    <? $this->outputCache->end(); ?>
+<? endif; ?>
 </div>

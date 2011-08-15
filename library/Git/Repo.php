@@ -11,6 +11,13 @@ class Repo
     protected $_parser;
 
     /**
+     * _cache 
+     * 
+     * @var Zend\Cache
+     */
+    protected $_cache;
+
+    /**
      * _commitCache 
      * 
      * @var array
@@ -38,9 +45,10 @@ class Repo
      * @param Git\Parser $parser 
      * @return void
      */
-    public function __construct($parser)
+    public function __construct($parser, $cache = false)
     {
         $this->setParser($parser);
+        $this->setCache($cache);
     }
 
     /**
@@ -60,86 +68,6 @@ class Repo
             $matches[$match['remote']] = $match['url'];
         }
         return $matches;
-    }
-
-    /**
-     * gravatarMap 
-     *
-     * Hack to figure out GitHub usernames from commits
-     * 
-     * @param mixed $gravatarHash 
-     * @return string
-     */
-    public function gravatarMap($gravatarHash)
-    {
-        if (!isset($this->_gravatarMap)) {
-            $this->_gravatarMap = $this->_buildGravatarMap();
-        }
-        if (is_array($this->_gravatarMap)) {
-            if(isset($this->_gravatarMap[$gravatarHash])) {
-                return $this->_gravatarMap[$gravatarHash];
-            } else {
-                if (!isset($this->_gravatarFileHashes[$gravatarHash])) {
-                    $this->_gravatarFileHashes[$gravatarHash] = md5(file_get_contents("http://gravatar.com/avatar/{$gravatarHash}?s=5"));
-                }
-                if(isset($this->_gravatarMap[$this->_gravatarFileHashes[$gravatarHash]])) {
-                    return $this->_gravatarMap[$this->_gravatarFileHashes[$gravatarHash]];
-                }
-                return false;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * _buildGravatarMap 
-     *
-     * Hack to figure out GitHub usernames from commits.
-     * Sorry this is so confusing. Would love a better way.
-     * 
-     * @return array
-     */
-    protected function _buildGravatarMap()
-    {
-        $remotes = $this->getRemotes();
-        foreach ($remotes as $remote => $url) {
-            if ($remote != 'origin') continue;
-            unset($remotes['origin']);
-            // Must have an origin that is from GitHub.
-            if (!isset($url) || strstr($url, '://github.com') === false) return false;
-            $url = parse_url(substr($url, 0, -4));
-            $apiUrl = "https://api.github.com/repos{$url['path']}/contributors";
-            $return = json_decode(file_get_contents($apiUrl));
-            $gravatars = array();
-            foreach ($return as $contributor) {
-                $gravatarUrl = parse_url($contributor->avatar_url);
-                $gravatarHash = substr($gravatarUrl['path'], -32);
-                if (!isset($gravatars[$gravatarHash])) {
-                    $gravatars[$gravatarHash] = $contributor->login;
-                    // hack for multiple email addresses...
-                    // this will break if they have different commit/github 
-                    // email addresses, but no gravatar set for either.
-                    $gravatarFileHash = md5(file_get_contents("http://gravatar.com/avatar/{$gravatarHash}?s=5"));
-                    $gravatars[$gravatarFileHash] = $contributor->login;
-                    unset($remotes[$contributor->login]);
-                }
-            }
-            break;
-        }
-        // for the ones left that we didn't find a gravatar for:
-        foreach ($remotes as $remote => $url) {
-            $url = parse_url(substr($url, 0, -4));
-            $apiUrl = 'https://api.github.com/repos' . $url['path'];
-            $return = json_decode(file_get_contents($apiUrl));
-            $gravatarUrl = parse_url($return->owner->avatar_url);
-            $gravatarHash = substr($gravatarUrl['path'], -32);
-            if (!isset($gravatars[$gravatarHash])) {
-                $gravatars[$gravatarHash] = $return->owner->login;
-                $gravatarFileHash = md5(file_get_contents("http://gravatar.com/avatar/{$gravatarHash}?s=5"));
-                $gravatars[$gravatarFileHash] = $return->owner->login;
-            }
-        }
-        return $gravatars;
     }
 
     /**
@@ -261,5 +189,26 @@ class Repo
         } else {
             return false;
         }
+    }
+ 
+    /**
+     * Get cache.
+     *
+     * @return cache
+     */
+    public function getCache()
+    {
+        return $this->_cache;
+    }
+ 
+    /**
+     * Set cache.
+     *
+     * @param $cache the value to be set
+     */
+    public function setCache($cache)
+    {
+        $this->_cache = $cache;
+        return $this;
     }
 }

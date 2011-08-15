@@ -10,9 +10,14 @@ class Zfstatus_Service_Git
      */
     protected $_repositories;
 
-    public function __construct($path)
+    protected $_cache;
+
+    public function __construct($path, $cache = false)
     {
         $this->getRepositories(new DirectoryIterator(realpath($path)));
+        if ($cache) {
+            $this->setCache($cache);
+        }
     }
 
     /**
@@ -29,7 +34,7 @@ class Zfstatus_Service_Git
                 if (!$fileInfo->isDot() && $fileInfo->isDir()) {
                     $dirName = $fileInfo->getFilename();
                     try {
-                        $this->_repositories[$dirName] = new Repo(new Parser($fileInfo->getPathname()));
+                        $this->_repositories[$dirName] = new Repo(new Parser($fileInfo->getPathname()), $this->getCache());
                     } catch (Exception $e) {
                         unset($this->_repositories[$dirName]);
                     }
@@ -37,5 +42,26 @@ class Zfstatus_Service_Git
             }
         }
         return $this->_repositories;
+    }
+ 
+    /**
+     * Get cache.
+     *
+     * @return cache
+     */
+    public function getCache()
+    {
+        return $this->_cache;
+    }
+ 
+    /**
+     * Set cache.
+     *
+     * @param $cache the value to be set
+     */
+    public function setCache($cache)
+    {
+        $this->_cache = $cache;
+        return $this;
     }
 }

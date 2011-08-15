@@ -80,13 +80,6 @@ class Zfstatus_Service_Zf
         'Zend\XmlRpc'         => array(),
     );
 
-    protected $_gh;
-
-    public function __construct($gh)
-    {
-        $this->_gh = $gh;
-    }
-
     public function getRecentActivity($repo)
     {
         $componentIndex = array();
@@ -95,7 +88,7 @@ class Zfstatus_Service_Zf
             if ($remote == 'origin') continue;
             foreach ($branches as $branch => $commits) {
                 // Skip master, work should be in topic branches
-                //if ($branch == 'master') continue;
+                if ($branch == 'master') continue;
                 foreach ($commits as $hash) {
                     $commit = $repo->getCommit($hash);
                     $components = $this->_commitToComponents($commit);
@@ -124,118 +117,6 @@ class Zfstatus_Service_Zf
     public function getComponents()
     {
         return array_keys($this->_components);
-    }
-
-    public function getForks()
-    {
-        return $this->_gh->getForks('zendframework','zf2');
-    }
-
-
-    /**
-     * buildIndex 
-     * @TODO: m:m branches/commits to components
-     * 
-     * @access public
-     * @return void
-     */
-    public function buildIndex()
-    {
-        $index = $this->_components;
-        foreach ($this->getForks() as $fork) {
-            if (isset($this->_authors[$fork->owner])) {
-                $user = $this->_gh->getUser($fork->owner);
-                $user->link = $this->_gh->gravatar($user->gravatar_id).' '.$this->_gh->linkUser($user->login);
-                $branches = $this->_gh->getBranches($fork->owner, $fork->name);
-                foreach ($branches as $branchName => $commitHash) {
-                    $lastCommit = $this->_gh->getCommit($fork->owner, $fork->name, $commitHash);
-                    if ($lastCommit->committer->login != $user->login) {
-                        continue;
-                    }
-                    // Skip merge commits?
-                    //while (isset($lastCommit->parents) && count($lastCommit->parents) > 1){
-                    //    $lastCommit = $this->_gh->getCommit($fork->owner, $fork->name, $lastCommit->parents[0]->id);
-                    //}
-                    $component = false;
-                    if ($branchName != 'master') $component = $this->_gitHubCommitToComponent($lastCommit); 
-                    if (isset($this->_components[$component])) $index[$component][$fork->owner][] = array(
-                        'user' => $user, 
-                        'branch' => $this->_gh->linkBranch($fork->owner, $fork->name, $branchName), 
-                        'commit' => $lastCommit,
-                        'commits' => $this->_gh->getCommits($fork->owner, $fork->name, $branchName)
-                    );
-                }
-            }
-        }
-        return $index;
-    }
-
-    public function getActiveComponents()
-    {
-        $components = $this->buildIndex();
-        foreach ($components as $i => $component) {
-            if (count($component) == 0) {
-                unset($components[$i]);
-                continue;
-            }
-            $times = array();
-            foreach ($component as $user=>$branches) {
-                foreach ($branches as $j=>$branch) {
-                    $times[] = $branch['commit']->committed_date;
-                } 
-            }
-            foreach ($component as $user=>$branches) {
-                $components[$i][$user][0]['latest'] = max($times);
-            }
-        }
-        return $components;
-    }
-
-    protected function _gitHubCommitToComponent($commit)
-    {
-        $components = array('failed' => array());
-        if (isset($commit->modified) && is_array($commit->modified)) {
-            foreach ($commit->modified as $f) {
-                if (is_object($f)) $f = $f->filename;
-                if ($c = $this->_filenameToComponentName($f)) {
-                    if (!isset($components[$c])) $components[$c] = 0;
-                    $components[$c]++;
-                } else {
-                    if (!isset($components['failed'][$f])) $components['failed'][$f] = 0;
-                    $components['failed'][$f]++;
-                }
-            }
-        }
-        if (isset($commit->added) && is_array($commit->added)) {
-            foreach ($commit->added as $f) {
-                if (is_object($f)) $f = $f->filename;
-                if ($c = $this->_filenameToComponentName($f)) {
-                    if (!isset($components[$c])) $components[$c] = 0;
-                    $components[$c]++;
-                } else {
-                    if (!isset($components['failed'][$f])) $components['failed'][$f] = 0;
-                    $components['failed'][$f]++;
-                }
-            }
-        }
-        if (isset($commit->removed) && is_array($commit->removed)) {
-            foreach ($commit->removed as $f) {
-                if (is_object($f)) $f = $f->filename;
-                if ($c = $this->_filenameToComponentName($f)) {
-                    if (!isset($components[$c])) $components[$c] = 0;
-                    $components[$c]++;
-                } else {
-                    if (!isset($components['failed'][$f])) $components['failed'][$f] = 0;
-                    $components['failed'][$f]++;
-                }
-            }
-        }
-        unset($components['failed']);
-        if (count($components) > 1 && count(array_unique($components)) > 1) {
-            arsort($components);
-        }
-        $components = array_keys($components); 
-        return array_shift($components);
     }
 
     protected function _commitToComponents($commit)

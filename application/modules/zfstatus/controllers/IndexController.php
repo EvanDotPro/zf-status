@@ -3,7 +3,6 @@ class Zfstatus_IndexController extends Zend_Controller_Action
 {
     public function indexAction()
     {
-        $zfService = Zend_Registry::get('Zfstatus_DiContainer')->getZfService();
         $gitService = Zend_Registry::get('Zfstatus_DiContainer')->getGitService();
         $repo = $this->_getParam('repo');
         $repos = $gitService->getRepositories();
@@ -12,8 +11,9 @@ class Zfstatus_IndexController extends Zend_Controller_Action
             $repo = array_shift($reposNames);
             
         }
-        $this->view->zfComponents = $zfService->getRecentActivity($repos[$repo]);
         $this->view->repo = $repos[$repo];
-        //var_dump($this->view->zfComponents);die();
+        $this->view->zfService = Zend_Registry::get('Zfstatus_DiContainer')->getZfService();
+        $this->view->gh = Zend_Registry::get('Zfstatus_DiContainer')->getGitHubService();
+        $this->view->outputCache = Zend_Registry::get('Zfstatus_DiContainer')->getCacheManager()->getCache('output');
     }
 }
