@@ -102,8 +102,8 @@ class Zfstatus_Service_Zf
                     foreach ($components as $component) {
                         $componentIndex[$component]['commits'][$hash] = $commit;
                         uasort($componentIndex[$component]['commits'], function($a, $b){
-                            if ($a->getAuthorTime() > $b->getAuthorTime()) return 1;
-                            return 0;
+                            if ($a->getAuthorTime() > $b->getAuthorTime()) return 0;
+                            return 1;
                         });
                         $componentIndex[$component]['remotes'][$remote][$branch][] = $hash;
                         if (isset($componentIndex[$component]['latest'])) {
