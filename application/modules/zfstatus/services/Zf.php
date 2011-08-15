@@ -83,6 +83,7 @@ class Zfstatus_Service_Zf
     public function getRecentActivity($repo)
     {
         $componentIndex = array();
+        $branchIndex = array();
         foreach ($repo->getCommitsByBranch(3, '--no-merges') as $remote => $branches) {
             // Skip origin, most work probably done in user forks
             if ($remote == 'origin') continue;
@@ -98,7 +99,20 @@ class Zfstatus_Service_Zf
                             if ($a->getAuthorTime() > $b->getAuthorTime()) return 0;
                             return 1;
                         });
-                        $componentIndex[$component]['remotes'][$remote][$branch][] = $hash;
+
+                        $absBranch = $remote.'/'.$branch;
+                        if (!isset($branchIndex[$absBranch])) {
+                            $branchIndex[$absBranch] = new StdClass;
+                            $branchIndex[$absBranch]->components = array();
+                        }
+                        if (!isset($branchIndex[$absBranch]->components[$component])) {
+                            $branchIndex[$absBranch]->components[$component] = 0;
+                        }
+                        $branchIndex[$absBranch]->components[$component]++;
+
+                        $componentIndex[$component]['remotes'][$remote][$branch]['commits'][] = $hash;
+                        $componentIndex[$component]['remotes'][$remote][$branch]['components'] = $branchIndex[$absBranch];
+                        $componentIndex[$component]['all-branches'][$absBranch] = $hash;
                         if (isset($componentIndex[$component]['latest'])) {
                             if ($commit->getAuthorTime() > $componentIndex[$component]['latest']) {
                                 $componentIndex[$component]['latest'] = $commit->getAuthorTime();

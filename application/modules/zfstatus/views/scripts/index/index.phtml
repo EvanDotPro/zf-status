@@ -44,10 +44,11 @@
                     <? foreach ($details['remotes'] as $remote => $branches): ?>
                         <div class="contrib-branches">
                             <ul>
-                                <? foreach ($branches as $branch => $hashes): ?>
+                                <? foreach ($branches as $branch => $info): ?>
+                                <? if (count($info['components']->components) > 5) { continue; } ?>
                                 <li><?=$remote;?>/<?=$branch?>
                                     <ul>
-                                        <? $j=0; foreach ($hashes as $hash): $j++; ?>
+                                        <? $j=0; foreach ($info['commits'] as $hash): $j++; ?>
                                             <? $commit = $details['commits'][$hash]; ?>
                                             <li title="<?=htmlentities(nl2br($commit->getMessage()));?>" class="commit tooltip nostyle <? if(($j)%2): ?>even<? else: ?>odd<? endif; ?>">
                                                 <span class="date floatRight"><?= $commit->getAuthorTime()->format(false ?: 'M d, Y H:i O');?></span>
