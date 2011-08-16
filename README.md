@@ -34,6 +34,9 @@ TODO
 * Remove hard-coded references to ZF2
 * Better solution for mapping commits to GitHub usernames
 * Remove hard-coded cache lifetimes in rand() calls.
+* Better filtering of which branches show for which components. Specifically,
+  only show a user's branch if it has a unique commit by the auther who owns the
+  branch.
 
 License
 -------
