@@ -19,11 +19,11 @@ Installation
 ------------
 
 * Fork/clone this repository.
-* cd zf-status/application/data/git
-* git clone git://github.com/zendframework/zf2.git 
-* cd zf2
-* git remote add githubusername git://github.com/githubusername/zf2.git (rinse and repeat for all forks you want to track)
-* git fetch --all
+* `cd zf-status/application/data/git`
+* `git clone git://github.com/zendframework/zf2.git` 
+* `cd zf2`
+* `git remote add githubusername git://github.com/githubusername/zf2.git` (rinse and repeat for all forks you want to track)
+* `git fetch --all`
 * Set up a cron to run `git fetch --all --prune` on some interval.
 * Set the cache for the 'output' cache in application/configs/config.php to the
   same interval (specified in seconds) 
