@@ -130,6 +130,9 @@ class Zfstatus_Service_Zf
         foreach ($this->getForks() as $fork) {
             if (isset($this->_authors[$fork->owner])) {
                 $user = $this->_gh->getUser($fork->owner);
+                if (!$user) {
+                    continue;
+                }
                 $user->link = $this->_gh->gravatar($user->gravatar_id).' '.$this->_gh->linkUser($user->login);
                 //echo '<h2>'.$gh->gravatar($user->gravatar_id).$gh->linkUser($user->login).'</h2>';
                 $branches = $this->_gh->getBranches($fork->owner, $fork->name);

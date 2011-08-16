@@ -1,0 +1,3 @@
+application/configs/config.development.php
+public/.htaccess
+application/cache/

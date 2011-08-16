@@ -15,7 +15,11 @@ class Zfstatus_Service_Github
 
     public function getUser($username)
     {
-        return $this->_get("user/show/{$username}")->user;
+        $user = $this->_get("user/show/{$username}");
+        if ($user) {
+            return $user->user;
+        }
+        return false;
     }
 
     public function getRepo($username, $repo)
