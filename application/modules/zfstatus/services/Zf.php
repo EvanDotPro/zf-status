@@ -5,6 +5,8 @@ class Zfstatus_Service_Zf
      * ZF2 Components
      *
      * This could probably be semi-automated? 
+     * They are each an array because I had some idea to add meta data to each 
+     * component but now I cannot remember what that was. Oh well.
      * 
      * @var array
      * @access protected
@@ -38,6 +40,7 @@ class Zfstatus_Service_Zf
         'Zend\Form'           => array(),
         'Zend\GData'          => array(),
         'Zend\Http'           => array(),
+        'Zend\Ical'           => array(),
         'Zend\InfoCard'       => array(),
         'Zend\Json'           => array(),
         'Zend\Layout'         => array(),
@@ -79,6 +82,13 @@ class Zfstatus_Service_Zf
         'Zend\Wildfire'       => array(),
         'Zend\XmlRpc'         => array(),
     );
+
+    public function getRecentCommits($repo)
+    {
+
+
+
+    }
 
     public function getRecentActivity($repo)
     {
