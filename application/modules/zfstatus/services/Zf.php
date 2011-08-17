@@ -83,25 +83,41 @@ class Zfstatus_Service_Zf
         'Zend\XmlRpc'         => array(),
     );
 
-    public function getRecentCommits($repo)
+    /**
+     * _gh 
+     * 
+     * @var ZfStatus_Service_Github
+     */
+    protected $_gh;
+
+    /**
+     * __construct 
+     * 
+     * @param mixed $gh 
+     * @access public
+     * @return void
+     */
+    public function __construct($gh)
     {
-
-
-
+        $this->setGh($gh);
     }
 
+    /**
+     * getRecentActivity 
+     * 
+     * @param mixed $repo 
+     * @return array
+     */
     public function getRecentActivity($repo)
     {
         $componentIndex = array();
         $branchIndex = array();
-        foreach ($repo->getCommitsByBranch(3, '--no-merges') as $remote => $branches) {
-            // Skip origin, most work probably done in user forks
-            if ($remote == 'origin') continue;
+        foreach ($repo->getCommitsByBranch(4, '--no-merges --first-parent', array('origin'), array('master')) as $remote => $branches) {
             foreach ($branches as $branch => $commits) {
-                // Skip master, work should be in topic branches
-                if ($branch == 'master') continue;
                 foreach ($commits as $hash) {
                     $commit = $repo->getCommit($hash);
+                    $gitHubUsername = $this->getGh()->emailToUsername($commit->getAuthorEmail(), $repo);
+                    if ($gitHubUsername != $remote) continue;
                     $components = $this->_commitToComponents($commit);
                     foreach ($components as $component) {
                         $componentIndex[$component]['commits'][$hash] = $commit;
@@ -172,4 +188,25 @@ class Zfstatus_Service_Zf
         return $parts[1].'\\'.$parts[2];
     }
 
+ 
+    /**
+     * Get gh.
+     *
+     * @return gh
+     */
+    public function getGh()
+    {
+        return $this->_gh;
+    }
+ 
+    /**
+     * Set gh.
+     *
+     * @param $gh the value to be set
+     */
+    public function setGh($gh)
+    {
+        $this->_gh = $gh;
+        return $this;
+    }
 }

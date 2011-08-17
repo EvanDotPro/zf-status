@@ -13,7 +13,7 @@ class Zfstatus_DiContainer extends DiContainerAbstract
     public function getZfService()
     {
         if (!isset($this->_storage['zfService'])) {
-            $this->_storage['zfService'] = new Zfstatus_Service_Zf;
+            $this->_storage['zfService'] = new Zfstatus_Service_Zf($this->getGitHubService());
         }
         return $this->_storage['zfService'];
     }

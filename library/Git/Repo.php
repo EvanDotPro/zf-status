@@ -85,17 +85,22 @@ class Repo
 
     /**
      * getCommitsByBranch 
-     * 
+     *
      * Returns a array of commits by remote/branch and build a cache
      * 
      * @param int $limit 
+     * @param string $extra 
+     * @param array $excludeRemotes 
+     * @param array $excludeBranches 
      * @return array
      */
-    public function getCommitsByBranch($limit = 5, $extra = '')
+    public function getCommitsByBranch($limit = 5, $extra = '', $excludeRemotes = array(), $excludeBranches = array())
     {
         $this->_commitsByBranch = array();
         $remoteBranches = $this->getRemoteBranches();
         foreach ($remoteBranches as $branch) {
+            if (in_array($branch['remote'], $excludeRemotes)) continue;
+            if (in_array($branch['branch'], $excludeBranches)) continue;
             $commits = $this->getParser()->run('log ' . $extra . ' -n ' . $limit . ' --pretty=format:\'</files>%n</commit>%n<commit>%n<json>%n{%n  "commit": "%H",%n  "tree": "%T",%n  "parent": "%P",%n  "author": {%n    "name": "%aN",%n    "email": "%aE",%n    "date": "%ai"%n  },%n  "committer": {%n    "name": "%cN",%n    "email": "%cE",%n    "date": "%ci"%n  }%n}%n</json>%n<message><![CDATA[%B]]></message>%n<files>\' --numstat '."{$branch['remote']}/{$branch['branch']}");
             $commits = simplexml_load_string('<commits>'.substr($commits,18).'</files></commit></commits>');
             foreach ($commits->commit as $log) {
