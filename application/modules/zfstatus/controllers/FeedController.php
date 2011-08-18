@@ -46,7 +46,7 @@ class Zfstatus_FeedController extends Zend_Controller_Action
                     '</a>'
                 );
                 $entry->setContent(
-                    '<img src="https://secure.gravatar.com/avatar/ ' .
+                    '<img src="https://secure.gravatar.com/avatar/' .
                     $commit->getAuthorGravatar() .
                     '?s=40&d=http://framework.zend.com/wiki/s/en/2148/48/_/images/icons/profilepics/anonymous.png" '.
                     'style="float: left; margin-right: 5px;" /> '.
