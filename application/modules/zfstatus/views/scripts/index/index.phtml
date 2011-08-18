@@ -5,46 +5,46 @@
             collapsible: true,
             autoHeight: false
         });
-        $('.tabs').tabs();
         $(".tooltip").tooltip({track: true});
     });
 </script>
 <div id="accordion">
-    <? foreach ($this->zfComponents as $component => $details): ?>
-        <? $users = array_keys($details); ?>
+<? if (!$this->outputCache->start('accordion')): ?>
+
+    <? $i=0; foreach ($this->zfService->getRecentActivity($this->repo) as $component => $details): $i++;?>
         <h3>
             <a href="#"><?=$component;?>
-                <? if (count($details) > 0): ?>
-                    <span class="floatRight"><?=$details[reset($users)][0]['latest']->format(false ?: 'M d, Y H:i e');?></span>
-                <? endif; ?>
+                <span class="floatRight"><?=$details['latest']->getAuthorTime()->format(false ?: 'M d, Y H:i O');?></span>
             </a> 
         </h3>
         <div>
-            <? foreach (array_keys($details) as $user): ?>
-                <div class="contrib-branches">
-                <h3>&nbsp; <?= $details[$user][0]['user']->link; ?><br/>&nbsp;&nbsp;
-                    <? if($details[$user][0]['user']->name): ?>
-                        (<?=$details[$user][0]['user']->name;?>)
-                    <? endif; ?>
-                </h3>
-                <ul>
-                    <? foreach ($details[$user] as $j => $info): ?>
-                        <li class="nostyle ">
-                            <strong><?=$info['branch']; ?></strong><br/>
-                                <ul>
-                                    <? foreach($info['commits'] as $k => $commit): ?>
-                                        <? if ($k >= 3){ break; } ?>
-                                        <li title="<?=htmlentities(nl2br($commit->message));?>" class="commit tooltip nostyle <? if(($k+1)%2): ?>even<? else: ?>odd<? endif; ?>"><?=$commit->link;?> <span class="date floatRight"><?=$commit->committed_date->format(false ?: 'M d, Y H:i e');?></span>
-<br/><span style="padding: 5px 5px 0px 5px; display: block;"><?=htmlentities($commit->messageBrief);?></span></li>
-                                    <? endforeach; ?>                                 
-                                </ul>
-<? /*
-    <?=$info['commit']->link;?> <span class="floatRight"><?=$info['commit']->committed_date->format(false ?: 'M d, Y H:i e');?></span></li>
- */?> 
-                    <? endforeach; ?>
-                </ul>
-                </div>
-            <? endforeach; ?>
+            <ul>
+                <? foreach ($details['branches'] as $branch => $details): ?>
+                    <li>
+                        <a href="https://github.com/<?=$details['remote'];?>/zf2/tree/<?=$details['branch'];?>" target="_blank"><?=$branch;?></a>
+                        <ul>
+                        <? $j=0; foreach ($details['commits'] as $hash => $commit): $j++; ?>
+                            <li title="<?=htmlentities(nl2br($commit->getMessage()));?>" class="commit tooltip nostyle <? if(($j)%2): ?>even<? else: ?>odd<? endif; ?>">
+                                <span class="date floatRight"><?= $commit->getAuthorTime()->format(false ?: 'M d, Y H:i O');?></span>
+                                <a href="https://github.com/<?= $this->gh->emailToUsername($commit->getAuthorEmail(), $this->repo); ?>" target="_blank">
+                                <img src="https://secure.gravatar.com/avatar/<?= $commit->getAuthorGravatar(); ?>?s=40&d=http://framework.zend.com/wiki/s/en/2148/48/_/images/icons/profilepics/anonymous.png" class="floatLeft" />
+                                </a>
+                                &nbsp;<strong>Author:</strong> 
+                                <a href="https://github.com/<?= $this->gh->emailToUsername($commit->getAuthorEmail(), $this->repo); ?>" target="_blank"><?= $commit->getAuthorName(); ?></a>
+                                <? if ($commit->getAuthorEmail() != $commit->getCommitterEmail()): ?>
+                                    (Committed by <?= $commit->getCommitterName(); ?>)
+                                <? endif; ?>
+                                <br/> 
+                                &nbsp;<strong>Commit:</strong> <a href="https://github.com/<?= $this->gh->emailToUsername($commit->getAuthorEmail(), $this->repo); ?>/zf2/commit/<?= $hash; ?>" target="_blank"><?= substr($hash, 0, 7); ?></a> 
+                                <strong>Tree:</strong> <a href="https://github.com/<?= $this->gh->emailToUsername($commit->getAuthorEmail(), $this->repo); ?>/zf2/tree/<?= $commit->getHash(); ?>" target="_blank"><?= substr($commit->getTree(), 0, 7); ?></a>
+                                <span style="padding: 5px 5px 0px 5px; display: block; clear: both;"><?= htmlentities($commit->getSubject()); ?></span></li>
+                        <? endforeach; ?>
+                        </ul>
+                    </li>
+                <? endforeach; ?>
+            </ul>
         </div>
     <? endforeach; ?>
+    <? $this->outputCache->end(); ?>
+<? endif; ?>
 </div>

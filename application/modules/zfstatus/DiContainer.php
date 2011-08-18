@@ -5,7 +5,7 @@ class Zfstatus_DiContainer extends DiContainerAbstract
     public function getGitHubService()
     {
         if (!isset($this->_storage['ghService'])) {
-            $this->_storage['ghService'] = new Zfstatus_Service_Github($this->getCache());
+            $this->_storage['ghService'] = new Zfstatus_Service_Github($this->getCacheManager()->getCache('default'));
         }
         return $this->_storage['ghService'];
     }
@@ -18,13 +18,22 @@ class Zfstatus_DiContainer extends DiContainerAbstract
         return $this->_storage['zfService'];
     }
 
-    public function getCache()
+    public function getGitService()
     {
-        return $this->_storage['cache'];
+        if (!isset($this->_storage['gitService'])) {
+            $options = $this->getOptions();
+            $this->_storage['gitService'] = new Zfstatus_Service_Git($options['git']['options']['cache_dir']);
+        }
+        return $this->_storage['gitService'];
     }
 
-    public function setCache($cache)
+    public function getCacheManager()
     {
-        $this->_storage['cache'] = $cache;
+        return $this->_storage['cachemanager'];
+    }
+
+    public function setCacheManager($cacheManager)
+    {
+        $this->_storage['cachemanager'] = $cacheManager;
     }
 }

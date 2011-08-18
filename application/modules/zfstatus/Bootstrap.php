@@ -6,6 +6,6 @@ class Zfstatus_Bootstrap extends BootstrapAbstract
     {
         $this->bootstrap('DiContainer');
         $this->getApplication()->bootstrap('cachemanager');
-        Zend_Registry::get('Zfstatus_DiContainer')->setCache($this->getApplication()->getResource('cachemanager')->getCache('default'));
+        Zend_Registry::get('Zfstatus_DiContainer')->setCacheManager($this->getApplication()->getResource('cachemanager'));
     }
 }

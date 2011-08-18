@@ -4,114 +4,133 @@
  */
 class Zfstatus_Service_Github
 {
-    protected $_apiUrl = 'http://github.com/api/v2/json/';
+    protected $_apiUrl = 'https://api.github.com/';
 
     protected $_cache;
+
+    protected $_gravatarMap;
 
     public function __construct($cache)
     {
         $this->_cache = $cache;
     }
 
-    public function getUser($username)
+    /**
+     * gravatarMap 
+     *
+     * Hack to figure out GitHub usernames from email
+     * 
+     * @param string $email 
+     * @return string
+     */
+    public function emailToUsername($email, $repo = false)
     {
-        $user = $this->_get("user/show/{$username}");
-        if ($user) {
-            return $user->user;
+        $gravatarHash = md5(trim(strtolower($email)));
+        if (!isset($this->_gravatarMap)) {
+            $this->_gravatarMap = $this->_buildGravatarMap($repo);
+        }
+        if (is_array($this->_gravatarMap)) {
+            if(isset($this->_gravatarMap[$gravatarHash])) {
+                return $this->_gravatarMap[$gravatarHash];
+            } else {
+                $remoteHash = $this->_md5RemoteGravatar($gravatarHash);
+                if(isset($this->_gravatarMap[$remoteHash])) {
+                    return $this->_gravatarMap[$remoteHash];
+                }
+                return false;
+            }
         }
         return false;
     }
 
-    public function getRepo($username, $repo)
+    /**
+     * _buildGravatarMap 
+     *
+     * Hack to figure out GitHub usernames from email.
+     * 
+     * @return array
+     */
+    protected function _buildGravatarMap($repo)
     {
-        return $this->_get("repos/show/{$username}/{$repo}")->repository;
-    }
-
-    public function getForks($username, $repo)
-    {
-        return $this->_get("repos/show/{$username}/{$repo}/network")->network;
-    }
-
-    public function getBranches($username, $repo)
-    {
-        return $this->_get("repos/show/{$username}/{$repo}/branches")->branches;
-    }
-
-    public function getCommit($username, $repo, $hash)
-    {
-        return $this->_fixCommit($this->_get("commits/show/{$username}/{$repo}/{$hash}")->commit);
-    }
-
-    public function getCommits($username, $repo, $branch)
-    {
-        $commits = $this->_get("commits/list/{$username}/{$repo}/{$branch}")->commits;
-        foreach ($commits as $i => $commit) {
-            $commits[$i] = $this->_fixCommit($commit);
+        $remotes = $repo->getRemotes();
+        foreach ($remotes as $remote => $url) {
+            if ($remote != 'origin') continue;
+            unset($remotes['origin']);
+            // Must have an origin that is from GitHub.
+            if (!isset($url) || strstr($url, '://github.com') === false) return false;
+            $url = parse_url(substr($url, 0, -4));
+            $return = $this->_get('repos'.$url['path'].'/contributors', rand(86400, 172800));
+            $gravatars = array();
+            foreach ($return as $contributor) {
+                $gravatarUrl = parse_url($contributor->avatar_url);
+                $gravatarHash = substr($gravatarUrl['path'], -32);
+                if (!isset($gravatars[$gravatarHash])) {
+                    $gravatars[$gravatarHash] = $contributor->login;
+                    // hack for multiple email addresses...
+                    // this will break if they have different commit/github 
+                    // email addresses, but no gravatar set for either.
+                    $gravatarFileHash = $this->_md5RemoteGravatar($gravatarHash);
+                    $gravatars[$gravatarFileHash] = $contributor->login;
+                    unset($remotes[$contributor->login]);
+                }
+            }
+            break;
         }
-        return $commits;
+        // for the ones left that we didn't find a gravatar for:
+        foreach ($remotes as $remote => $url) {
+            $url = parse_url(substr($url, 0, -4));
+            $return = $this->_get('repos' . $url['path'], rand(86400, 172800));
+            $gravatarUrl = parse_url($return->owner->avatar_url);
+            $gravatarHash = substr($gravatarUrl['path'], -32);
+            if (!isset($gravatars[$gravatarHash])) {
+                $gravatars[$gravatarHash] = $return->owner->login;
+                $gravatarFileHash = $this->_md5RemoteGravatar($gravatarHash);
+                $gravatars[$gravatarFileHash] = $return->owner->login;
+            }
+        }
+        return $gravatars;
     }
 
-    public function getContributors($username, $repo)
+    protected function _addGravatarHash($gravatars, $gravatarHash)
     {
-        return $this->_get("repos/show/{$username}/{$repo}/contributors")->contributors;
+        if (!isset($gravatars[$gravatarHash])) {
+            $gravatars[$gravatarHash] = $contributor->login;
+            // hack for multiple email addresses...
+            // this will break if they have different commit/github 
+            // email addresses, but no gravatar set for either.
+            $gravatarFileHash = $this->_md5RemoteGravatar("http://gravatar.com/avatar/{$gravatarHash}?s=5");
+            $gravatars[$gravatarFileHash] = $contributor->login;
+            unset($remotes[$contributor->login]);
+        }
     }
 
-    protected function _fixCommit($commit)
+    protected function _md5RemoteGravatar($gravatarHash)
     {
-        $commit->committed_date = new DateTime($commit->committed_date);
-        $commit->committed_date = $commit->committed_date->setTimezone(new DateTimeZone('UTC'));
-        $commit->link = $this->linkCommit($commit->url);
-        $msg = explode("\n", $commit->message);
-        $commit->messageBrief = array_shift($msg); 
-        return $commit;
-    }
-
-    protected function _get($url)
-    {
-        $url = $this->_apiUrl.$url;
-
+        $url = "http://gravatar.com/avatar/{$gravatarHash}?s=5";
         if (($result = $this->_cache->load($this->_cacheTag($url))) !== false ) return $result;
-
-        $result = $this->_decode(@file_get_contents($url));
-        if ($result) {
-            $this->_cache->save($result, $this->_cacheTag($url));
-        }
-
+        $img = @file_get_contents($url);
+        $result = md5($img);
+        if ($img) $this->_cache->save($result, $this->_cacheTag($url), array(), rand(7200, 14400));
         return $result;
     }
 
-    protected function _decode($data)
+    protected function _get($url, $cacheTimeout = false)
     {
-        return json_decode($data);
+        $url = $this->_apiUrl.$url;
+        if (($result = $this->_cache->load($this->_cacheTag($url))) !== false ) return $result;
+        $result = json_decode(@file_get_contents($url));
+        if ($result) {
+            if (!$cacheTimeout) {
+                $this->_cache->save($result, $this->_cacheTag($url));
+            } else {
+                $this->_cache->save($result, $this->_cacheTag($url), array(), $cacheTimeout);
+            }
+        }
+        return $result;
     }
 
     protected function _cacheTag($tag)
     {
         return preg_replace('/[^A-Za-z0-9]/','_', $tag);
-    }
-
-    public function gravatar($gravatarId)
-    {
-        return "<img src=\"https://secure.gravatar.com/avatar/{$gravatarId}?s=40&d=http://framework.zend.com/wiki/s/en/2148/48/_/images/icons/profilepics/anonymous.png\" class=\"floatLeft\"/>"; 
-    }
-
-    public function linkUser($username)
-    {
-        return "<a href=\"http://github.com/{$username}\" target=\"_BLANK\">{$username}</a>";
-    }
-
-    public function linkBranch($username, $repo, $branch)
-    {
-        return "<a href=\"https://github.com/{$username}/{$repo}/tree/{$branch}\" target=\"_BLANK\">{$branch}</a>";
-    }
-
-    public function linkCommit($username, $repo = false, $sha1 = false)
-    {
-        if ($repo == false && $sha1 == false) { 
-            $sha1 = explode('/', $username);
-            $sha1 = array_pop($sha1);
-            return "<a href=\"https://github.com{$username}\" target=\"_BLANK\">".substr($sha1,0,7)."</a>";
-        }
-        return "<a href=\"https://github.com/{$username}/{$repo}/commit/{$sha1}\" target=\"_BLANK\">".substr($sha1,0,7)."</a>";
     }
 }

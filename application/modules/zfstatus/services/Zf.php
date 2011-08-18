@@ -5,6 +5,8 @@ class Zfstatus_Service_Zf
      * ZF2 Components
      *
      * This could probably be semi-automated? 
+     * They are each an array because I had some idea to add meta data to each 
+     * component but now I cannot remember what that was. Oh well.
      * 
      * @var array
      * @access protected
@@ -38,6 +40,7 @@ class Zfstatus_Service_Zf
         'Zend\Form'           => array(),
         'Zend\GData'          => array(),
         'Zend\Http'           => array(),
+        'Zend\Ical'           => array(),
         'Zend\InfoCard'       => array(),
         'Zend\Json'           => array(),
         'Zend\Layout'         => array(),
@@ -81,30 +84,81 @@ class Zfstatus_Service_Zf
     );
 
     /**
-     * GitHub -> Jira/Atlassian 
+     * _gh 
      * 
-     * @var array
-     * @access protected
+     * @var ZfStatus_Service_Github
      */
-    protected $_authors = array(
-        'weierophinney'  => 'matthew',
-        'ralphschindler' => 'ralph',
-        'marc-mabe'      => 'mabe',
-        'ezimuel'        => 'zimuel',
-        'robertbasic'    => 'robertbasic',
-        'adamlundrigan'  => 'adamlundrigan',
-        'DASPRiD'        => 'dasprid',
-        'thomasweidner'  => 'thomas',
-        'Freeaqingme'    => 'freak',
-        'farazdagi'      => 'torio',
-        'mikaelkael'     => 'mikaelkael',
-    );
-
     protected $_gh;
 
+    /**
+     * __construct 
+     * 
+     * @param mixed $gh 
+     * @access public
+     * @return void
+     */
     public function __construct($gh)
     {
-        $this->_gh = $gh;
+        $this->setGh($gh);
+    }
+
+    /**
+     * getRecentActivity 
+     * 
+     * @param mixed $repo 
+     * @return array
+     */
+    public function getRecentActivity($repo)
+    {
+        $componentIndex = array();
+        $commitsByBranch = $repo->getCommitsByBranch(4, '--no-merges --first-parent', array('origin'), array('master'));
+        foreach ($commitsByBranch as $remote => $branches) {
+            foreach ($branches as $branch => $commits) {
+                foreach ($commits as $hash) {
+                    $commit = $repo->getCommit($hash);
+                    $gitHubUsername = $this->getGh()->emailToUsername($commit->getAuthorEmail(), $repo);
+                    // this helps filter out irrelevant branches / commits
+                    if ($gitHubUsername != $remote) continue;
+                    $components = $this->_commitToComponents($commit);
+                    $sortFunc = function($a, $b){
+                        if (is_array($a) && isset($a['latest'])) {
+                            if ($a['latest']->getAuthorTime() > $b['latest']->getAuthorTime()) return 0;
+                            return 1;
+                        }
+                        if ($a->getAuthorTime() > $b->getAuthorTime()) return 0;
+                        return 1;
+                    };
+
+                    foreach ($components as $component) {
+                        $absBranch = $remote.'/'.$branch;
+                        $componentIndex[$component]['branches'][$absBranch]['remote'] = $remote;
+                        $componentIndex[$component]['branches'][$absBranch]['branch'] = $branch;
+                        $componentIndex[$component]['branches'][$absBranch]['gravatar'] = $commit->getAuthorGravatar();
+                        $componentIndex[$component]['branches'][$absBranch]['commits'][$hash] = $commit;
+                        uasort($componentIndex[$component]['branches'][$absBranch]['commits'], $sortFunc);
+                        $latest = $this->_mostRecentCommit(@$componentIndex[$component]['branches'][$absBranch]['latest'], $commit);
+                        $componentIndex[$component]['branches'][$absBranch]['latest'] = $latest;
+                        uasort($componentIndex[$component]['branches'], $sortFunc);
+
+                        $latest = $this->_mostRecentCommit(@$componentIndex[$component]['latest'], $commit);
+                        $componentIndex[$component]['latest'] = $latest;
+                    }
+                }
+            }
+        }
+
+        // Sort by component names
+        ksort($componentIndex);
+
+        // Sort by most recently updated component
+        //uasort($componentIndex, $sortFunc);
+        return $componentIndex;
+    }
+
+    protected function _mostRecentCommit($commit1 = NULL, $commit2)
+    {
+        if (!$commit1 || $commit1->getAuthorTime() < $commit2->getAuthorTime()) return $commit2;
+        return $commit1;
     }
 
     public function getComponents()
@@ -112,120 +166,25 @@ class Zfstatus_Service_Zf
         return array_keys($this->_components);
     }
 
-    public function getForks()
+    protected function _commitToComponents($commit)
     {
-        return $this->_gh->getForks('zendframework','zf2');
-    }
-
-    /**
-     * buildIndex 
-     * @TODO: m:m branches/commits to components
-     * 
-     * @access public
-     * @return void
-     */
-    public function buildIndex()
-    {
-        $index = $this->_components;
-        foreach ($this->getForks() as $fork) {
-            if (isset($this->_authors[$fork->owner])) {
-                $user = $this->_gh->getUser($fork->owner);
-                if (!$user) {
-                    continue;
-                }
-                $user->link = $this->_gh->gravatar($user->gravatar_id).' '.$this->_gh->linkUser($user->login);
-                //echo '<h2>'.$gh->gravatar($user->gravatar_id).$gh->linkUser($user->login).'</h2>';
-                $branches = $this->_gh->getBranches($fork->owner, $fork->name);
-                //echo '<ul>';
-                foreach ($branches as $branchName => $commitHash) {
-                    $lastCommit = $this->_gh->getCommit($fork->owner, $fork->name, $commitHash);
-                    if ($lastCommit->committer->login != $user->login) {
-                        continue;
-                    }
-                    // Skip merge commits?
-                    //while (isset($lastCommit->parents) && count($lastCommit->parents) > 1){
-                    //    $lastCommit = $this->_gh->getCommit($fork->owner, $fork->name, $lastCommit->parents[0]->id);
-                    //}
-                    $component = false;
-                    if ($branchName != 'master') $component = $this->_commitToComponent($lastCommit); 
-                    if (isset($this->_components[$component])) $index[$component][$fork->owner][] = array(
-                        'user' => $user, 
-                        'branch' => $this->_gh->linkBranch($fork->owner, $fork->name, $branchName), 
-                        'commit' => $lastCommit,
-                        'commits' => $this->_gh->getCommits($fork->owner, $fork->name, $branchName)
-                    );
-                }
-            }
-        }
-        return $index;
-    }
-
-    public function getActiveComponents()
-    {
-        $components = $this->buildIndex();
-        foreach ($components as $i => $component) {
-            if (count($component) == 0) {
-                unset($components[$i]);
-                continue;
-            }
-            $times = array();
-            foreach ($component as $user=>$branches) {
-                foreach ($branches as $j=>$branch) {
-                    $times[] = $branch['commit']->committed_date;
-                } 
-            }
-            foreach ($component as $user=>$branches) {
-                $components[$i][$user][0]['latest'] = max($times);
-            }
-        }
-        return $components;
-    }
-
-    protected function _commitToComponent($commit)
-    {
-        $components = array('failed' => array());
-        if (isset($commit->modified) && is_array($commit->modified)) {
-            foreach ($commit->modified as $f) {
-                if (is_object($f)) $f = $f->filename;
+        $components = array('nomatch' => array());
+        if (count($commit->getFiles()) > 0) {
+            foreach ($commit->getFiles() as $f) {
+                $f = $f['file'];
                 if ($c = $this->_filenameToComponentName($f)) {
                     if (!isset($components[$c])) $components[$c] = 0;
                     $components[$c]++;
                 } else {
-                    if (!isset($components['failed'][$f])) $components['failed'][$f] = 0;
-                    $components['failed'][$f]++;
+                    if (!isset($components['nomatch'][$f])) $components['nomatch'][$f] = 0;
+                    $components['nomatch'][$f]++;
                 }
             }
         }
-        if (isset($commit->added) && is_array($commit->added)) {
-            foreach ($commit->added as $f) {
-                if (is_object($f)) $f = $f->filename;
-                if ($c = $this->_filenameToComponentName($f)) {
-                    if (!isset($components[$c])) $components[$c] = 0;
-                    $components[$c]++;
-                } else {
-                    if (!isset($components['failed'][$f])) $components['failed'][$f] = 0;
-                    $components['failed'][$f]++;
-                }
-            }
-        }
-        if (isset($commit->removed) && is_array($commit->removed)) {
-            foreach ($commit->removed as $f) {
-                if (is_object($f)) $f = $f->filename;
-                if ($c = $this->_filenameToComponentName($f)) {
-                    if (!isset($components[$c])) $components[$c] = 0;
-                    $components[$c]++;
-                } else {
-                    if (!isset($components['failed'][$f])) $components['failed'][$f] = 0;
-                    $components['failed'][$f]++;
-                }
-            }
-        }
-        unset($components['failed']);
-        if (count($components) > 1 && count(array_unique($components)) > 1) {
-            arsort($components);
-        }
+        unset($components['nomatch']); // comment out for debugging unmatched components
+        if (count(array_unique($components)) > 1) arsort($components);
         $components = array_keys($components); 
-        return array_shift($components);
+        return $components;
     }
 
     protected function _filenameToComponentName($filename)
@@ -236,4 +195,25 @@ class Zfstatus_Service_Zf
         return $parts[1].'\\'.$parts[2];
     }
 
+ 
+    /**
+     * Get gh.
+     *
+     * @return gh
+     */
+    public function getGh()
+    {
+        return $this->_gh;
+    }
+ 
+    /**
+     * Set gh.
+     *
+     * @param $gh the value to be set
+     */
+    public function setGh($gh)
+    {
+        $this->_gh = $gh;
+        return $this;
+    }
 }
