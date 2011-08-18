@@ -141,6 +141,9 @@ class Zfstatus_Service_Zf
                         continue;
                     }
                     foreach ($components as $component) {
+                        // comment the following line out to include components 
+                        // that are not in the list above (no validation)
+                        if (!in_array($component, $this->getComponents())) continue;
                         $componentIndex[$component]['branches'][$absBranch]['remote'] = $remote;
                         $componentIndex[$component]['branches'][$absBranch]['branch'] = $branch;
                         $componentIndex[$component]['branches'][$absBranch]['gravatar'] = $commit->getAuthorGravatar();
