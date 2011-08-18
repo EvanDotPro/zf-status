@@ -34,7 +34,11 @@
             <div class="tabListBottom">
                 <ul class="tabListSubNav clearfix">
                     <li class="active">
-                        <a href="#">Recently Updated</a>
+                        <? if ($this->sort == 'recent'): ?>
+                            <a href="/">Sort Alphabetically</a>
+                        <? else: ?>
+                            <a href="/recent">Sort by Activity</a>
+                        <? endif; ?>
                     </li>
                 </ul>
             </div>
