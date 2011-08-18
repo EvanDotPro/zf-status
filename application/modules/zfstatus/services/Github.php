@@ -59,7 +59,7 @@ class Zfstatus_Service_Github
             // Must have an origin that is from GitHub.
             if (!isset($url) || strstr($url, '://github.com') === false) return false;
             $url = parse_url(substr($url, 0, -4));
-            $return = $this->_get('repos'.$url['path'].'/contributors', rand(86400, 172800));
+            $return = $this->_get('repos'.$url['path'].'/contributors', rand(172800, 259200));
             $gravatars = array();
             foreach ($return as $contributor) {
                 $gravatarUrl = parse_url($contributor->avatar_url);
@@ -79,7 +79,7 @@ class Zfstatus_Service_Github
         // for the ones left that we didn't find a gravatar for:
         foreach ($remotes as $remote => $url) {
             $url = parse_url(substr($url, 0, -4));
-            $return = $this->_get('repos' . $url['path'], rand(86400, 172800));
+            $return = $this->_get('repos' . $url['path'], rand(172800, 259200));
             $gravatarUrl = parse_url($return->owner->avatar_url);
             $gravatarHash = substr($gravatarUrl['path'], -32);
             if (!isset($gravatars[$gravatarHash])) {
@@ -110,7 +110,7 @@ class Zfstatus_Service_Github
         if (($result = $this->_cache->load($this->_cacheTag($url))) !== false ) return $result;
         $img = @file_get_contents($url);
         $result = md5($img);
-        if ($img) $this->_cache->save($result, $this->_cacheTag($url), array(), rand(7200, 14400));
+        if ($img) $this->_cache->save($result, $this->_cacheTag($url), array(), rand(172800, 259200));
         return $result;
     }
 

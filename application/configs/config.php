@@ -26,7 +26,7 @@ $config['resources']['cachemanager']['default']['frontend']['options']['automati
 $config['resources']['cachemanager']['default']['backend']['name']                                = 'File';
 $config['resources']['cachemanager']['default']['backend']['options']['cache_dir']                = APPLICATION_PATH . '/data/cache';
 $config['resources']['cachemanager']['output']['frontend']['name']                                = 'Output';
-$config['resources']['cachemanager']['output']['frontend']['options']['lifetime']                 = 1800; // match this to your cron
+$config['resources']['cachemanager']['output']['frontend']['options']['lifetime']                 = 60; // match this to your cron
 $config['resources']['cachemanager']['output']['frontend']['options']['automatic_serialization']  = true;
 $config['resources']['cachemanager']['output']['backend']['name']                                 = 'File';
 $config['resources']['cachemanager']['output']['backend']['options']['cache_dir']                 = APPLICATION_PATH . '/data/cache';
