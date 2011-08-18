@@ -111,47 +111,54 @@ class Zfstatus_Service_Zf
     public function getRecentActivity($repo)
     {
         $componentIndex = array();
-        $branchIndex = array();
-        foreach ($repo->getCommitsByBranch(4, '--no-merges --first-parent', array('origin'), array('master')) as $remote => $branches) {
+        $commitsByBranch = $repo->getCommitsByBranch(4, '--no-merges --first-parent', array('origin'), array('master'));
+        foreach ($commitsByBranch as $remote => $branches) {
             foreach ($branches as $branch => $commits) {
                 foreach ($commits as $hash) {
                     $commit = $repo->getCommit($hash);
                     $gitHubUsername = $this->getGh()->emailToUsername($commit->getAuthorEmail(), $repo);
+                    // this helps filter out irrelevant branches / commits
                     if ($gitHubUsername != $remote) continue;
                     $components = $this->_commitToComponents($commit);
-                    foreach ($components as $component) {
-                        $componentIndex[$component]['commits'][$hash] = $commit;
-                        uasort($componentIndex[$component]['commits'], function($a, $b){
-                            if ($a->getAuthorTime() > $b->getAuthorTime()) return 0;
+                    $sortFunc = function($a, $b){
+                        if (is_array($a) && isset($a['latest'])) {
+                            if ($a['latest']->getAuthorTime() > $b['latest']->getAuthorTime()) return 0;
                             return 1;
-                        });
+                        }
+                        if ($a->getAuthorTime() > $b->getAuthorTime()) return 0;
+                        return 1;
+                    };
 
+                    foreach ($components as $component) {
                         $absBranch = $remote.'/'.$branch;
-                        if (!isset($branchIndex[$absBranch])) {
-                            $branchIndex[$absBranch] = new StdClass;
-                            $branchIndex[$absBranch]->components = array();
-                        }
-                        if (!isset($branchIndex[$absBranch]->components[$component])) {
-                            $branchIndex[$absBranch]->components[$component] = 0;
-                        }
-                        $branchIndex[$absBranch]->components[$component]++;
+                        $componentIndex[$component]['branches'][$absBranch]['remote'] = $remote;
+                        $componentIndex[$component]['branches'][$absBranch]['branch'] = $branch;
+                        $componentIndex[$component]['branches'][$absBranch]['gravatar'] = $commit->getAuthorGravatar();
+                        $componentIndex[$component]['branches'][$absBranch]['commits'][$hash] = $commit;
+                        uasort($componentIndex[$component]['branches'][$absBranch]['commits'], $sortFunc);
+                        $latest = $this->_mostRecentCommit(@$componentIndex[$component]['branches'][$absBranch]['latest'], $commit);
+                        $componentIndex[$component]['branches'][$absBranch]['latest'] = $latest;
+                        uasort($componentIndex[$component]['branches'], $sortFunc);
 
-                        $componentIndex[$component]['remotes'][$remote][$branch]['commits'][] = $hash;
-                        $componentIndex[$component]['remotes'][$remote][$branch]['components'] = $branchIndex[$absBranch];
-                        $componentIndex[$component]['all-branches'][$absBranch] = $hash;
-                        if (isset($componentIndex[$component]['latest'])) {
-                            if ($commit->getAuthorTime() > $componentIndex[$component]['latest']) {
-                                $componentIndex[$component]['latest'] = $commit->getAuthorTime();
-                            }
-                        } else {
-                            $componentIndex[$component]['latest'] = $commit->getAuthorTime();
-                        }
+                        $latest = $this->_mostRecentCommit(@$componentIndex[$component]['latest'], $commit);
+                        $componentIndex[$component]['latest'] = $latest;
                     }
                 }
             }
         }
+
+        // Sort by component names
         ksort($componentIndex);
+
+        // Sort by most recently updated component
+        //uasort($componentIndex, $sortFunc);
         return $componentIndex;
+    }
+
+    protected function _mostRecentCommit($commit1 = NULL, $commit2)
+    {
+        if (!$commit1 || $commit1->getAuthorTime() < $commit2->getAuthorTime()) return $commit2;
+        return $commit1;
     }
 
     public function getComponents()
