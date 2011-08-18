@@ -105,10 +105,13 @@ class Zfstatus_Service_Zf
     /**
      * getRecentActivity 
      * 
-     * @param mixed $repo 
+     * @param Git\Repo $repo 
+     * @param string $sortBy alpha|recent
+     * @param bool $justCommits
+     * @access public
      * @return array
      */
-    public function getRecentActivity($repo)
+    public function getRecentActivity($repo, $sortBy = 'alpha', $justCommits = false)
     {
         $componentIndex = array();
         $commitsByBranch = $repo->getCommitsByBranch(4, '--no-merges --first-parent', array('origin'), array('master'));
@@ -128,9 +131,16 @@ class Zfstatus_Service_Zf
                         if ($a->getAuthorTime() > $b->getAuthorTime()) return 0;
                         return 1;
                     };
-
+                    $absBranch = $remote.'/'.$branch;
+                    if ($justCommits) {
+                        $componentIndex['commits'][$hash] = $commit;
+                        uasort($componentIndex['commits'], $sortFunc);
+                        $componentIndex['meta'][$hash]['components'] = $components;
+                        $componentIndex['meta'][$hash]['remote'] = $remote;
+                        $componentIndex['meta'][$hash]['branch'] = $branch;
+                        continue;
+                    }
                     foreach ($components as $component) {
-                        $absBranch = $remote.'/'.$branch;
                         $componentIndex[$component]['branches'][$absBranch]['remote'] = $remote;
                         $componentIndex[$component]['branches'][$absBranch]['branch'] = $branch;
                         $componentIndex[$component]['branches'][$absBranch]['gravatar'] = $commit->getAuthorGravatar();
@@ -139,7 +149,6 @@ class Zfstatus_Service_Zf
                         $latest = $this->_mostRecentCommit(@$componentIndex[$component]['branches'][$absBranch]['latest'], $commit);
                         $componentIndex[$component]['branches'][$absBranch]['latest'] = $latest;
                         uasort($componentIndex[$component]['branches'], $sortFunc);
-
                         $latest = $this->_mostRecentCommit(@$componentIndex[$component]['latest'], $commit);
                         $componentIndex[$component]['latest'] = $latest;
                     }
@@ -147,11 +156,14 @@ class Zfstatus_Service_Zf
             }
         }
 
-        // Sort by component names
-        ksort($componentIndex);
-
-        // Sort by most recently updated component
-        //uasort($componentIndex, $sortFunc);
+        if (!$justCommits){ 
+            if ($sortBy == 'recent') {
+                // Sort by most recently updated component
+                uasort($componentIndex, $sortFunc);
+            } else {
+                ksort($componentIndex);
+            }
+        }
         return $componentIndex;
     }
 
