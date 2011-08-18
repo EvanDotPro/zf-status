@@ -3,6 +3,8 @@ class Zfstatus_FeedController extends Zend_Controller_Action
 {
     public function indexAction()
     {
+		$this->_helper->layout->disableLayout();
+        $this->_helper->viewRenderer->setNoRender();
         $gitService = Zend_Registry::get('Zfstatus_DiContainer')->getGitService();
         $repo = $this->_getParam('repo');
         $repos = $gitService->getRepositories();
@@ -18,13 +20,13 @@ class Zfstatus_FeedController extends Zend_Controller_Action
         $feed->setLink('http://zf2.evan.pro/');
         $feed->setFeedLink('http://zf2.evan.pro/feed', 'atom');
         $feed->setTitle('ZF2 Recent Git Activity');
-        $feed->setDateModified(time());
-
         $commits = $zfService->getRecentActivity($repo, 'recent', true);
+        $feed->setDateModified(reset($commits['commits'])->getAuthorTime()->getTimestamp());
         foreach ($commits['commits'] as $hash => $commit) {
             $meta = $commits['meta'][$hash];
+            $fullBranch = $meta['remote'] . '/' . $meta['branch'];
             $entry = $feed->createEntry();
-            $entry->setTitle(substr($hash,0,7) . ': ' . $commit->getSubject());
+            $entry->setTitle(substr($hash,0,7) . ' on ' . $fullBranch . ': ' . $commit->getSubject());
             $entry->setLink('http://github.com/' . $meta['remote'] . '/zf2/commit/'.$hash);
             $entry->addAuthor(array(
                 'name'  => $commit->getAuthorName(),
@@ -32,11 +34,24 @@ class Zfstatus_FeedController extends Zend_Controller_Action
             ));
             $entry->setDateCreated($commit->getAuthorTime()->getTimestamp());
             $entry->setDateModified($commit->getCommitterTime()->getTimestamp());
-            $entry->setDescription('Commit by ' . $commit->getAuthorName() . ' on branch ' . $meta['remote'] . '/' . $meta['branch']);
+            $entry->setDescription(
+                'Commit by <a href="http://github.com/' . $meta['remote'] . '">' . 
+                $commit->getAuthorName() .
+                '</a> ' . 
+                ' on branch ' . 
+                '<a href="http://github.com/' . $meta['remote'] . '/zf2/tree/' . $meta['branch'] . '">' .
+                $fullBranch .
+                '</a>'
+            );
             $entry->setContent(
-                $commit->getMessage() . 
+                '<img src="https://secure.gravatar.com/avatar/ ' .
+                $commit->getAuthorGravatar() .
+                '?s=40&d=http://framework.zend.com/wiki/s/en/2148/48/_/images/icons/profilepics/anonymous.png" '.
+                'style="float: left; margin-right: 5px;" /> '.
+                '<strong>' . $entry->getDescription() . '</strong><br/>' .
+                nl2br($commit->getMessage()) . 
                 '<br/>' .
-                '<strong>Affects components:</strong> ' . 
+                '<strong>Affects component(s):</strong> ' . 
                 implode(', ', $meta['components'])
             );
             $feed->addEntry($entry);
@@ -44,6 +59,6 @@ class Zfstatus_FeedController extends Zend_Controller_Action
 
         $out = $feed->export('atom');
 
-        die($out);
+        echo $out;
     }
 }
