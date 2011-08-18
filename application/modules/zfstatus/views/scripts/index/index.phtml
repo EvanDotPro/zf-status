@@ -9,7 +9,7 @@
     });
 </script>
 <div id="accordion">
-<? if (!$this->outputCache->start('accordion')): ?>
+<? if (!$this->outputCache->start('accordion_' . preg_replace('/[^A-Za-z0-9_]/','',$this->repoName))): ?>
     <? $i=0; foreach ($this->zfService->getRecentActivity($this->repo) as $component => $details): $i++;?>
         <h3>
             <a href="#"><?=$component;?>
