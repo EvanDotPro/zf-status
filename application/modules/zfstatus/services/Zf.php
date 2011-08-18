@@ -231,4 +231,23 @@ class Zfstatus_Service_Zf
         $this->_gh = $gh;
         return $this;
     }
+
+    /**
+     * linkIssues 
+     * 
+     * @param string $string 
+     * @param string|bool $linkText 
+     * @return string
+     */
+    public function linkIssues($string, $linkText = false)
+    {
+        $pattern = '/(?P<issue>ZF2?-?\d+)/';
+        if ($linkText) {
+            if (preg_match($pattern, $string, $match)) {
+                return " <a href=\"http://framework.zend.com/issues/browse/{$match['issue']}\" target=\"_blank\">{$linkText}</a>";
+            }
+            return '';
+        }
+        return preg_replace($pattern, '<a href="http://framework.zend.com/issues/browse/${1}" target="_blank">${1}</a>', $string);
+    }
 }

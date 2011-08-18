@@ -21,6 +21,7 @@
                 <? foreach ($details['branches'] as $branch => $details): ?>
                     <li>
                         <a href="https://github.com/<?=$details['remote'];?>/zf2/tree/<?=$details['branch'];?>" target="_blank"><?=$branch;?></a>
+                        <?= $this->zfService->linkIssues($branch, '(Issue Tracker)'); ?>
                         <ul>
                         <? $j=0; foreach ($details['commits'] as $hash => $commit): $j++; ?>
                             <li title="<?=htmlentities(nl2br($commit->getMessage()));?>" class="commit tooltip nostyle <? if(($j)%2): ?>even<? else: ?>odd<? endif; ?>">
@@ -36,7 +37,7 @@
                                 <br/> 
                                 &nbsp;<strong>Commit:</strong> <a href="https://github.com/<?= $this->gh->emailToUsername($commit->getAuthorEmail(), $this->repo); ?>/zf2/commit/<?= $hash; ?>" target="_blank"><?= substr($hash, 0, 7); ?></a> 
                                 <strong>Tree:</strong> <a href="https://github.com/<?= $this->gh->emailToUsername($commit->getAuthorEmail(), $this->repo); ?>/zf2/tree/<?= $commit->getHash(); ?>" target="_blank"><?= substr($commit->getTree(), 0, 7); ?></a>
-                                <span style="padding: 5px 5px 0px 5px; display: block; clear: both;"><?= htmlentities($commit->getSubject()); ?></span></li>
+                                <span style="padding: 5px 5px 0px 5px; display: block; clear: both;"><?= $this->zfService->linkIssues(htmlentities($commit->getSubject())); ?></span></li>
                         <? endforeach; ?>
                         </ul>
                     </li>
