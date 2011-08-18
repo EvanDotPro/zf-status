@@ -13,7 +13,7 @@
     <? $i=0; foreach ($this->zfService->getRecentActivity($this->repo, $this->sort) as $component => $details): $i++;?>
         <h3>
             <a href="#"><?=$component;?>
-                <span class="floatRight"><?=$details['latest']->getAuthorTime()->format(false ?: 'M d, Y H:i O');?></span>
+                <span class="floatRight"><?=$details['latest']->getAuthorTime()->format(false ?: 'M d, Y H:i O');?> (<?= $this->zfService->dateTimeAgo($details['latest']->getAuthorTime()); ?>)</span>
             </a> 
         </h3>
         <div>
@@ -25,7 +25,7 @@
                         <ul>
                         <? $j=0; foreach ($details['commits'] as $hash => $commit): $j++; ?>
                             <li title="<?=htmlentities(nl2br($commit->getMessage()));?>" class="commit tooltip nostyle <? if(($j)%2): ?>even<? else: ?>odd<? endif; ?>">
-                                <span class="date floatRight"><?= $commit->getAuthorTime()->format(false ?: 'M d, Y H:i O');?></span>
+                                <span class="date floatRight"><?= $commit->getAuthorTime()->format(false ?: 'M d, Y H:i O');?> (<?= $this->zfService->dateTimeAgo($commit->getAuthorTime()); ?>)</span>
                                 <a href="https://github.com/<?= $this->gh->emailToUsername($commit->getAuthorEmail(), $this->repo); ?>" target="_blank">
                                 <img src="https://secure.gravatar.com/avatar/<?= $commit->getAuthorGravatar(); ?>?s=40&d=http://framework.zend.com/wiki/s/en/2148/48/_/images/icons/profilepics/anonymous.png" class="floatLeft" />
                                 </a>

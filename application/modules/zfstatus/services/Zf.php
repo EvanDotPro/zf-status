@@ -250,4 +250,31 @@ class Zfstatus_Service_Zf
         }
         return preg_replace($pattern, '<a href="http://framework.zend.com/issues/browse/${1}" target="_blank">${1}</a>', $string);
     }
+
+    /**
+     * dateTimeAgo 
+     *
+     * Returns how many seconds/minutes/hours/days/months/years ago a datetime 
+     * was. Examples on PHP.net were all too bloated so I came up with this.
+     * 
+     * @param DateTime $dateTime 
+     * @return string
+     */
+    public function dateTimeAgo(DateTime $dateTime)
+    {
+        $interval = $dateTime->diff(new DateTime);
+        $vals = array(
+            'y' => 'year',
+            'm' => 'month',
+            'd' => 'day',
+            'h' => 'hour',
+            'i' => 'minute',
+            's' => 'second'
+        );
+        foreach ($vals as $short => $word) {
+            if ($interval->$short >= 1) {
+                return $interval->$short . ' ' . $word . ($interval->$short > 1 ? 's' : '') . ' ago';
+            } 
+        }
+    }
 }
