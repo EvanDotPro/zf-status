@@ -12,6 +12,7 @@ class Zfstatus_IndexController extends Zend_Controller_Action
         }
         $this->view->repo = $repos[$repo];
         $this->view->repoName = $repo;
+        $this->view->sort = $this->_getParam('sort');
         $this->view->zfService = Zend_Registry::get('Zfstatus_DiContainer')->getZfService();
         $this->view->gh = Zend_Registry::get('Zfstatus_DiContainer')->getGitHubService();
         $this->view->outputCache = Zend_Registry::get('Zfstatus_DiContainer')->getCacheManager()->getCache('output');

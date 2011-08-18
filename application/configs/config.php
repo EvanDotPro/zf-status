@@ -20,6 +20,12 @@ $config['resources']['jquery']['version']    = '1.6';
 $config['resources']['jquery']['uiversion']  = '1.8';
 $config['resources']['jquery']['stylesheet'] = 'https://ajax.googleapis.com/ajax/libs/jqueryui/'.$config['resources']['jquery']['uiversion'].'/themes/redmond/jquery-ui.css';
 
+$config['resources']['router']['routes']['sort']['route']                  = '/recent';
+$config['resources']['router']['routes']['sort']['defaults']['module']     = 'zfstatus';
+$config['resources']['router']['routes']['sort']['defaults']['controller'] = 'index';
+$config['resources']['router']['routes']['sort']['defaults']['action']     = 'index';
+$config['resources']['router']['routes']['sort']['defaults']['sort']       = 'recent';
+
 $config['resources']['cachemanager']['default']['frontend']['name']                               = 'Core';
 $config['resources']['cachemanager']['default']['frontend']['options']['lifetime']                = 7200;
 $config['resources']['cachemanager']['default']['frontend']['options']['automatic_serialization'] = true;
