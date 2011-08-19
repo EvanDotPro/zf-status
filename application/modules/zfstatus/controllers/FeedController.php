@@ -11,18 +11,19 @@ class Zfstatus_FeedController extends Zend_Controller_Action
         if (!$repo) {
             $reposNames = array_keys($repos);
             $repo = array_shift($reposNames);
-            
         }
-        $outputCache = Zend_Registry::get('Zfstatus_DiContainer')->getCacheManager()->getCache('output');
-        if (!$outputCache->start('accordion_feed_'.preg_replace('/[^A-Za-z0-9_]/','',$repo))) {
+
+        $cache = Zend_Registry::get('Zfstatus_DiContainer')->getCacheManager()->getCache('default');
+        $cacheTag = 'accordion_feed_' . preg_replace('/[^A-Za-z0-9_]/','',$repo);
+        if ( ($feed = $cache->load($cacheTag)) === false ) {
             $repo = $repos[$repo];
             $zfService = Zend_Registry::get('Zfstatus_DiContainer')->getZfService();
+            $commits = $zfService->getRecentActivity($repo, 'recent', true);
             $feed = new Zend_Feed_Writer_Feed;
             $feed->setTitle('ZF2 Recent Git Activity');
             $feed->setLink('http://zf2.evan.pro/');
             $feed->setFeedLink('http://zf2.evan.pro/feed', 'atom');
             $feed->setTitle('ZF2 Recent Git Activity');
-            $commits = $zfService->getRecentActivity($repo, 'recent', true);
             $feed->setDateModified(reset($commits['commits'])->getAuthorTime()->getTimestamp());
             foreach ($commits['commits'] as $hash => $commit) {
                 $meta = $commits['meta'][$hash];
@@ -58,8 +59,8 @@ class Zfstatus_FeedController extends Zend_Controller_Action
                 );
                 $feed->addEntry($entry);
             }
-            echo $feed->export('atom');
-            $outputCache->end();
+            $cache->save($feed, $cacheTag);
         }
+        echo $feed->export('atom');
     }
 }

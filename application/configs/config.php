@@ -27,15 +27,10 @@ $config['resources']['router']['routes']['sort']['defaults']['action']     = 'in
 $config['resources']['router']['routes']['sort']['defaults']['sort']       = 'recent';
 
 $config['resources']['cachemanager']['default']['frontend']['name']                               = 'Core';
-$config['resources']['cachemanager']['default']['frontend']['options']['lifetime']                = 7200;
+$config['resources']['cachemanager']['default']['frontend']['options']['lifetime']                = 0;
 $config['resources']['cachemanager']['default']['frontend']['options']['automatic_serialization'] = true;
 $config['resources']['cachemanager']['default']['backend']['name']                                = 'File';
 $config['resources']['cachemanager']['default']['backend']['options']['cache_dir']                = APPLICATION_PATH . '/data/cache';
-$config['resources']['cachemanager']['output']['frontend']['name']                                = 'Output';
-$config['resources']['cachemanager']['output']['frontend']['options']['lifetime']                 = 0; // We'll clear this via the cron when it sees new commits
-$config['resources']['cachemanager']['output']['frontend']['options']['automatic_serialization']  = true;
-$config['resources']['cachemanager']['output']['backend']['name']                                 = 'File';
-$config['resources']['cachemanager']['output']['backend']['options']['cache_dir']                 = APPLICATION_PATH . '/data/cache';
 $config['git']['options']['cache_dir'] = APPLICATION_PATH . '/data/git';
 
 $file = dirname(__FILE__) . DIRECTORY_SEPARATOR . 'config.'.APPLICATION_ENV.'.php';
