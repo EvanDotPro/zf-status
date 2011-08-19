@@ -271,9 +271,9 @@ class Zfstatus_Service_Zf
             'i' => 'minute',
             's' => 'second'
         );
-        foreach ($vals as $short => $word) {
-            if ($interval->$short >= 1) {
-                return $interval->$short . ' ' . $word . ($interval->$short > 1 ? 's' : '') . ' ago';
+        foreach ($vals as $l => $word) { //$l = abbrev for 'letter'
+            if ($interval->$l >= 1) {
+                return ($l != 's' && $l != 'i' ? 'about ' : '') . $interval->$l . ' ' . $word . ($interval->$l > 1 ? 's' : '') . ' ago';
             } 
         }
     }
