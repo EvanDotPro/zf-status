@@ -13,6 +13,7 @@ class Zfstatus_Service_Zf
      */
     protected $_components = array (
         'Documentation'       => array(),
+        'Module: Zf2Mvc'      => array(),
         'Zend\Acl'            => array(),
         'Zend\Amf'            => array(),
         'Zend\Application'    => array(),
@@ -63,6 +64,7 @@ class Zfstatus_Service_Zf
         'Zend\Queue'          => array(),
         'Zend\Reflection'     => array(),
         'Zend\Rest'           => array(),
+        'Zend\Router'         => array(),
         'Zend\Search'         => array(),
         'Zend\Serializer'     => array(),
         'Zend\Server'         => array(),
@@ -114,7 +116,7 @@ class Zfstatus_Service_Zf
     public function getRecentActivity($repo, $sortBy = 'alpha', $justCommits = false)
     {
         $componentIndex = array();
-        $commitsByBranch = $repo->getCommitsByBranch(4, '--no-merges --first-parent', array('origin'), array('master'));
+        $commitsByBranch = $repo->getCommitsByBranch(4, '--no-merges', array('origin'), array('master'));
         foreach ($commitsByBranch as $remote => $branches) {
             foreach ($branches as $branch => $commits) {
                 foreach ($commits as $hash) {
@@ -206,10 +208,10 @@ class Zfstatus_Service_Zf
     {
         $parts = explode('/', $filename);
         if (count($parts) > 1 && $parts[0] == 'documentation') return 'Documentation'; 
+        if (count($parts) > 1 && $parts[0] == 'modules') return 'Module: '.$parts[1]; 
         if (count($parts) < 2 || $parts[1] != 'Zend') return false;
         return $parts[1].'\\'.$parts[2];
     }
-
  
     /**
      * Get gh.
