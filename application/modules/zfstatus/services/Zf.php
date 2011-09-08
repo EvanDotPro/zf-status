@@ -14,6 +14,7 @@ class Zfstatus_Service_Zf
     protected $_components = array (
         'Documentation'       => array(),
         'Module: Zf2Mvc'      => array(),
+        'Module: Zf2Module'   => array(),
         'Zend\Acl'            => array(),
         'Zend\Amf'            => array(),
         'Zend\Application'    => array(),
