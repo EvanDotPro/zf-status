@@ -13,8 +13,6 @@ class Zfstatus_Service_Zf
      */
     protected $_components = array (
         'Documentation'       => array(),
-        'Module: Zf2Mvc'      => array(),
-        'Module: Zf2Module'   => array(),
         'Zend\Acl'            => array(),
         'Zend\Amf'            => array(),
         'Zend\Application'    => array(),
@@ -55,6 +53,7 @@ class Zfstatus_Service_Zf
         'Zend\Measure'        => array(),
         'Zend\Memory'         => array(),
         'Zend\Mime'           => array(),
+        'Zend\Module'         => array(),
         'Zend\Mvc'            => array(),
         'Zend\Navigation'     => array(),
         'Zend\OAuth'          => array(),
@@ -116,8 +115,16 @@ class Zfstatus_Service_Zf
      */
     public function getRecentActivity($repo, $sortBy = 'alpha', $justCommits = false)
     {
+        $sortFunc = function($a, $b){
+            if (is_array($a) && isset($a['latest'])) {
+                if ($a['latest']->getAuthorTime() > $b['latest']->getAuthorTime()) return 0;
+                return 1;
+            }
+            if ($a->getAuthorTime() > $b->getAuthorTime()) return 0;
+            return 1;
+        };
         $componentIndex = array();
-        $commitsByBranch = $repo->getCommitsByBranch(4, '--no-merges', array('origin'), array('master'));
+        $commitsByBranch = $repo->getCommitsByBranch(7, '--no-merges', array('origin'), array('master'));
         foreach ($commitsByBranch as $remote => $branches) {
             foreach ($branches as $branch => $commits) {
                 foreach ($commits as $hash) {
@@ -126,14 +133,6 @@ class Zfstatus_Service_Zf
                     // this helps filter out irrelevant branches / commits
                     if ($gitHubUsername != $remote) continue;
                     $components = $this->_commitToComponents($commit);
-                    $sortFunc = function($a, $b){
-                        if (is_array($a) && isset($a['latest'])) {
-                            if ($a['latest']->getAuthorTime() > $b['latest']->getAuthorTime()) return 0;
-                            return 1;
-                        }
-                        if ($a->getAuthorTime() > $b->getAuthorTime()) return 0;
-                        return 1;
-                    };
                     $absBranch = $remote.'/'.$branch;
                     if ($justCommits) {
                         $componentIndex['commits'][$hash] = $commit;
@@ -209,7 +208,14 @@ class Zfstatus_Service_Zf
     {
         $parts = explode('/', $filename);
         if (count($parts) > 1 && $parts[0] == 'documentation') return 'Documentation'; 
-        if (count($parts) > 1 && $parts[0] == 'modules') return 'Module: '.$parts[1]; 
+        if (count($parts) > 1 && $parts[0] == 'modules') {
+            if ($parts[1] == 'ZendMvc' || $parts[1] == 'Zf2Mvc') {
+                return 'Zend\Mvc';
+            } elseif ($parts[1] == 'ZendModule' || $parts[1] == 'Zf2Module') {
+                return 'Zend\Module';
+            }
+            return 'Module: '.$parts[1]; 
+        }
         if (count($parts) < 2 || $parts[1] != 'Zend') return false;
         return $parts[1].'\\'.$parts[2];
     }
