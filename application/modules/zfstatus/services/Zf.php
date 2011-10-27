@@ -250,7 +250,7 @@ class Zfstatus_Service_Zf
      */
     public function linkIssues($string, $linkText = false)
     {
-        $pattern = '/(?P<issue>ZF2?-?\d+)/';
+        $pattern = '/(?P<issue>ZF(2)?-\d+)/';
         if ($linkText) {
             if (preg_match($pattern, $string, $match)) {
                 return " <a href=\"http://framework.zend.com/issues/browse/{$match['issue']}\" target=\"_blank\">{$linkText}</a>";
